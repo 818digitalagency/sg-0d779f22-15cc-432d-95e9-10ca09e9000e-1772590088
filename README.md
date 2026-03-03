@@ -8,10 +8,10 @@ An enterprise-grade lead intelligence and outreach automation platform designed 
 
 ---
 
-## 🌟 Features
+## ✨ Key Features
 
-### Lead Intelligence
-- **Smart Lead Discovery** - AI-powered business data aggregation
+### 🎯 Lead Intelligence
+- **Smart Lead Discovery** - Multi-source business data aggregation
 - **Advanced Filtering** - Search by industry, location, rating, and score
 - **Lead Scoring Engine** - Multi-factor scoring algorithm (0-100)
 - **Geographic Visualization** - Interactive map with clustering
@@ -26,7 +26,9 @@ An enterprise-grade lead intelligence and outreach automation platform designed 
 - **Performance Dashboard** - Real-time metrics and KPIs
 - **Conversion Tracking** - Funnel analysis and attribution
 - **Lead Intelligence** - AI-powered recommendations
-- **Export Capabilities** - CSV, Excel, PDF reports
+- **Export Capabilities** - CSV, Excel, PDF with custom field selection
+- **Interactive Charts**: Real-time analytics with Recharts
+- **User Profiles**: Comprehensive account management
 
 ---
 

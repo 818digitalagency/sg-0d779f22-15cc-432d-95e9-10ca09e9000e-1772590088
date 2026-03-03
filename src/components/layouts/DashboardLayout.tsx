@@ -9,7 +9,9 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Map,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -90,6 +92,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Link>
               );
             })}
+
+            <Link
+              href="/dashboard/map"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                router.pathname === "/dashboard/map"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <MapPin className="w-5 h-5" />
+              <span className="font-medium">Map View</span>
+            </Link>
+
+            <Link
+              href="/dashboard/profile"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                router.pathname === "/dashboard/profile"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <User className="w-5 h-5" />
+              <span className="font-medium">Profile</span>
+            </Link>
           </nav>
 
           {/* User Section */}

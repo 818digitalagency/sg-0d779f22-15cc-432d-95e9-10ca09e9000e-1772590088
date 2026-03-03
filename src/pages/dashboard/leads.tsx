@@ -40,13 +40,20 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Target
+  Target,
+  FileSpreadsheet,
+  FileText,
+  CheckCircle2
 } from "lucide-react";
 import { useState } from "react";
 import type { Lead, EngagementStatus } from "@/types/lead";
 import { CATEGORIES, NB_CITIES } from "@/types/lead";
 import { ProposalGenerator } from "@/components/ai/ProposalGenerator";
 import { LeadScoreCard } from "@/components/ai/LeadScoreCard";
+import { dataExporter, type ExportOptions } from "@/lib/utils/exportData";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 
 const MOCK_LEADS: Lead[] = [
   {
@@ -198,7 +205,21 @@ export default function LeadsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showProposalDialog, setShowProposalDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportComplete, setExportComplete] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
+  const [exportFields, setExportFields] = useState<string[]>([
+    "businessName",
+    "contactName",
+    "email",
+    "phone",
+    "city",
+    "industry",
+    "leadScore",
+    "status"
+  ]);
   const itemsPerPage = 10;
 
   const filteredLeads = MOCK_LEADS.filter(lead => {
@@ -267,6 +288,61 @@ export default function LeadsPage() {
     setShowScoreDialog(true);
   };
 
+  const handleExport = async () => {
+    setExportProgress(0);
+    setExportComplete(false);
+    
+    const leadsToExport = selectedLeads.size > 0 
+      ? MOCK_LEADS.filter(l => selectedLeads.has(l.id))
+      : filteredLeads;
+
+    const options: ExportOptions = {
+      format: exportFormat,
+      fields: exportFields,
+      includeHeaders: true
+    };
+
+    const result = await dataExporter.exportWithProgress(
+      leadsToExport,
+      options,
+      (progress) => setExportProgress(progress)
+    );
+
+    if (result.success) {
+      setExportComplete(true);
+      setTimeout(() => {
+        setShowExportDialog(false);
+        setExportComplete(false);
+        setExportProgress(0);
+      }, 2000);
+    }
+  };
+
+  const toggleExportField = (field: string) => {
+    setExportFields(prev => 
+      prev.includes(field) 
+        ? prev.filter(f => f !== field)
+        : [...prev, field]
+    );
+  };
+
+  const availableFields = [
+    { value: "businessName", label: "Business Name" },
+    { value: "contactName", label: "Contact Name" },
+    { value: "email", label: "Email" },
+    { value: "phone", label: "Phone" },
+    { value: "website", label: "Website" },
+    { value: "address", label: "Address" },
+    { value: "city", label: "City" },
+    { value: "postalCode", label: "Postal Code" },
+    { value: "industry", label: "Industry" },
+    { value: "leadScore", label: "Lead Score" },
+    { value: "rating", label: "Rating" },
+    { value: "reviewCount", label: "Review Count" },
+    { value: "status", label: "Status" },
+    { value: "businessAge", label: "Business Age" }
+  ];
+
   return (
     <>
       <SEO title="Leads - Opportunity Finder" />
@@ -279,7 +355,11 @@ export default function LeadsPage() {
               <p className="text-slate-600 mt-1">{filteredLeads.length} business opportunities</p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" className="gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => setShowExportDialog(true)}
+              >
                 <Download className="w-4 h-4" />
                 Export
               </Button>
@@ -545,6 +625,102 @@ export default function LeadsPage() {
               </DialogDescription>
             </DialogHeader>
             {selectedLead && <LeadScoreCard lead={selectedLead} />}
+          </DialogContent>
+        </Dialog>
+
+        {/* Export Dialog */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Download className="w-5 h-5 text-blue-600" />
+                Export Leads
+              </DialogTitle>
+              <DialogDescription>
+                Export {selectedLeads.size > 0 ? `${selectedLeads.size} selected` : filteredLeads.length} leads to your preferred format
+              </DialogDescription>
+            </DialogHeader>
+
+            {exportComplete ? (
+              <div className="py-8 text-center space-y-4">
+                <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto" />
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">Export Complete!</h3>
+                  <p className="text-sm text-slate-600 mt-1">Your file has been downloaded successfully.</p>
+                </div>
+              </div>
+            ) : (
+              <Tabs value={exportFormat} onValueChange={(v) => setExportFormat(v as any)} className="mt-4">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="csv" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    CSV
+                  </TabsTrigger>
+                  <TabsTrigger value="excel" className="gap-2">
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Excel
+                  </TabsTrigger>
+                  <TabsTrigger value="pdf" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    PDF
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-slate-900 mb-3 block">
+                      Select Fields to Export
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {availableFields.map((field) => (
+                        <div key={field.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={field.value}
+                            checked={exportFields.includes(field.value)}
+                            onCheckedChange={() => toggleExportField(field.value)}
+                          />
+                          <label
+                            htmlFor={field.value}
+                            className="text-sm text-slate-700 cursor-pointer"
+                          >
+                            {field.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {exportProgress > 0 && exportProgress < 100 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Preparing export...</span>
+                        <span className="font-medium text-blue-600">{Math.round(exportProgress)}%</span>
+                      </div>
+                      <Progress value={exportProgress} className="h-2" />
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setShowExportDialog(false)}
+                      disabled={exportProgress > 0 && exportProgress < 100}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="flex-1 gap-2"
+                      onClick={handleExport}
+                      disabled={exportFields.length === 0 || (exportProgress > 0 && exportProgress < 100)}
+                    >
+                      <Download className="w-4 h-4" />
+                      Export {exportFormat.toUpperCase()}
+                    </Button>
+                  </div>
+                </div>
+              </Tabs>
+            )}
           </DialogContent>
         </Dialog>
       </DashboardLayout>

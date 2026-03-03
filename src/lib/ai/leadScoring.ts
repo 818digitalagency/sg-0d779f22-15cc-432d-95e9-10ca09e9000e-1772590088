@@ -448,6 +448,88 @@ export class AILeadScorer {
   }
 
   /**
+   * Get score breakdown for UI display
+   */
+  getScoreBreakdown(lead: Lead): {
+    total: number;
+    digitalPresence: number;
+    reputation: number;
+    businessMaturity: number;
+    engagementPotential: number;
+  } {
+    const result = this.scoreLead(lead);
+    return {
+      total: result.totalScore,
+      digitalPresence: result.factors.digitalPresence,
+      reputation: this.calculateReputationScore(lead),
+      businessMaturity: result.factors.businessMaturity,
+      engagementPotential: result.factors.engagement
+    };
+  }
+
+  /**
+   * Calculate reputation score from ratings
+   */
+  private calculateReputationScore(lead: Lead): number {
+    let score = 50;
+    
+    if (lead.googleRating) {
+      if (lead.googleRating >= 4.5) score = 95;
+      else if (lead.googleRating >= 4.0) score = 85;
+      else if (lead.googleRating >= 3.5) score = 70;
+      else if (lead.googleRating >= 3.0) score = 55;
+      else score = 40;
+    }
+
+    if (lead.reviewCount) {
+      if (lead.reviewCount > 100) score += 5;
+      else if (lead.reviewCount > 50) score += 3;
+    }
+
+    return Math.min(score, 100);
+  }
+
+  /**
+   * Get lead insights for UI display
+   */
+  getLeadInsights(lead: Lead): {
+    priority: "high" | "medium" | "low";
+    factors: string[];
+  } {
+    const result = this.scoreLead(lead);
+    const factors: string[] = [];
+
+    if (result.factors.websiteQuality < 50) {
+      factors.push("Poor or missing website - high opportunity");
+    }
+    if (lead.googleRating && lead.googleRating >= 4.5) {
+      factors.push("Excellent reputation with strong reviews");
+    }
+    if (lead.businessAge && lead.businessAge > 10) {
+      factors.push("Well-established business with market presence");
+    }
+    if (result.factors.engagement >= 80) {
+      factors.push("Complete contact information available");
+    }
+    if (result.factors.marketPotential >= 75) {
+      factors.push("Operating in high-growth industry");
+    }
+
+    return {
+      priority: result.priority,
+      factors
+    };
+  }
+
+  /**
+   * Get actionable recommendations for UI display
+   */
+  getRecommendations(lead: Lead): string[] {
+    const result = this.scoreLead(lead);
+    return result.recommendations;
+  }
+
+  /**
    * Identify leads needing immediate attention
    */
   getUrgentLeads(leads: Lead[]): Array<{ lead: Lead; score: ScoringResult; reason: string }> {

@@ -3,6 +3,39 @@
  * Generates personalized business proposals using AI-driven templates
  */
 
+import type { Lead } from "@/types/lead";
+
+export type ProposalTemplate = 
+  | "modern_web_design"
+  | "digital_marketing"
+  | "it_consulting"
+  | "ecommerce_platform"
+  | "business_automation"
+  | "branding_package";
+
+export interface ProposalOptions {
+  template: ProposalTemplate;
+  tone: "professional" | "friendly" | "consultative";
+  includeTestimonials?: boolean;
+  includePricing?: boolean;
+  includeTimeline?: boolean;
+  customRequirements?: string;
+}
+
+export interface GeneratedProposal {
+  content: string;
+  suggestedSubject: string;
+  estimatedReadTime: number;
+  personalizationScore: number;
+}
+
+export interface TemplateInfo {
+  id: ProposalTemplate;
+  name: string;
+  description: string;
+  bestFor: string[];
+}
+
 export interface ProposalParams {
   businessName: string;
   contactName?: string;
@@ -16,21 +49,49 @@ export interface ProposalParams {
   length?: "short" | "medium" | "long";
 }
 
-export interface GeneratedProposal {
-  subject: string;
-  greeting: string;
-  body: string;
-  callToAction: string;
-  signature: string;
-  fullText: string;
-  estimatedReadTime: number;
-  personalizationScore: number;
-}
-
 /**
  * AI-powered proposal generation engine
  */
 export class AIProposalGenerator {
+  private templates: TemplateInfo[] = [
+    {
+      id: "modern_web_design",
+      name: "Modern Web Design",
+      description: "Complete website redesign with modern UI/UX",
+      bestFor: ["Outdated websites", "No mobile optimization", "Poor user experience"]
+    },
+    {
+      id: "digital_marketing",
+      name: "Digital Marketing Package",
+      description: "Comprehensive digital marketing strategy",
+      bestFor: ["Low online visibility", "Poor SEO", "Limited social presence"]
+    },
+    {
+      id: "it_consulting",
+      name: "IT Consulting Services",
+      description: "Technology assessment and optimization",
+      bestFor: ["Tech modernization", "Cloud migration", "System integration"]
+    },
+    {
+      id: "ecommerce_platform",
+      name: "E-Commerce Platform",
+      description: "Online store development and optimization",
+      bestFor: ["Retail businesses", "Product sales", "Online expansion"]
+    },
+    {
+      id: "business_automation",
+      name: "Business Automation",
+      description: "Process automation and workflow optimization",
+      bestFor: ["Manual processes", "Inefficiency", "Scaling challenges"]
+    },
+    {
+      id: "branding_package",
+      name: "Brand Identity Package",
+      description: "Complete brand development and positioning",
+      bestFor: ["New businesses", "Rebranding", "Market positioning"]
+    }
+  ];
+
   private industryInsights: Record<string, string[]> = {
     "Real Estate": [
       "digital property showcases",
@@ -94,9 +155,74 @@ export class AIProposalGenerator {
   };
 
   /**
-   * Generate personalized proposal
+   * Get available proposal templates
    */
-  generateProposal(params: ProposalParams): GeneratedProposal {
+  getAvailableTemplates(): TemplateInfo[] {
+    return this.templates;
+  }
+
+  /**
+   * Generate personalized proposal (overloaded for backward compatibility)
+   */
+  generateProposal(lead: Lead, options: ProposalOptions): GeneratedProposal;
+  generateProposal(params: ProposalParams): { subject: string; greeting: string; body: string; callToAction: string; signature: string; fullText: string; estimatedReadTime: number; personalizationScore: number };
+  generateProposal(leadOrParams: Lead | ProposalParams, options?: ProposalOptions): GeneratedProposal | any {
+    // New signature with Lead + ProposalOptions
+    if (options && "id" in leadOrParams) {
+      const lead = leadOrParams as Lead;
+      return this.generateProposalFromLead(lead, options);
+    }
+    
+    // Old signature with ProposalParams
+    const params = leadOrParams as ProposalParams;
+    return this.generateProposalFromParams(params);
+  }
+
+  /**
+   * Generate proposal from Lead and options
+   */
+  private generateProposalFromLead(lead: Lead, options: ProposalOptions): GeneratedProposal {
+    const params: ProposalParams = {
+      businessName: lead.businessName,
+      contactName: lead.contactName,
+      industry: lead.category,
+      city: lead.city,
+      businessAge: lead.businessAge,
+      websiteQuality: lead.websiteQuality,
+      serviceOffering: this.getServiceOfferingForTemplate(options.template),
+      tone: options.tone as any,
+      length: "medium"
+    };
+
+    const result = this.generateProposalFromParams(params);
+    
+    return {
+      content: result.fullText,
+      suggestedSubject: result.subject,
+      estimatedReadTime: result.estimatedReadTime,
+      personalizationScore: result.personalizationScore
+    };
+  }
+
+  /**
+   * Get service offering description for template
+   */
+  private getServiceOfferingForTemplate(template: ProposalTemplate): string {
+    const offerings: Record<ProposalTemplate, string> = {
+      modern_web_design: "modern website design and development",
+      digital_marketing: "comprehensive digital marketing services",
+      it_consulting: "IT consulting and technology optimization",
+      ecommerce_platform: "e-commerce platform development",
+      business_automation: "business process automation",
+      branding_package: "brand identity and positioning"
+    };
+    return offerings[template];
+  }
+
+  /**
+   * Generate personalized proposal from params
+   */
+  private generateProposalFromParams(params: ProposalParams): { subject: string; greeting: string; body: string; callToAction: string; signature: string; fullText: string; estimatedReadTime: number; personalizationScore: number } {
     const {
       businessName,
       contactName,

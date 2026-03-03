@@ -1,0 +1,12 @@
+# Opportunity Finder - Robots.txt
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /auth/
+
+# Sitemap
+Sitemap: https://opportunityfinder.ca/sitemap.xml
+
+# Crawl-delay for well-behaved bots
+Crawl-delay: 1

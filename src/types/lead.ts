@@ -10,6 +10,7 @@ export interface Lead {
   website?: string;
   description?: string;
   category: string;
+  businessAge?: number;
   estimatedAge?: number;
   googleRating?: number;
   reviewCount?: number;
@@ -22,6 +23,7 @@ export interface Lead {
   dataSource: string;
   leadScore: number;
   websiteQuality?: number;
+  status: EngagementStatus;
   engagementStatus: EngagementStatus;
   tags: string[];
   lastContactDate?: string;

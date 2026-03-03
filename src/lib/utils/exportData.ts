@@ -226,7 +226,6 @@ export class DataExporter {
       reviewCount: lead.reviewCount || 0,
       status: lead.status,
       businessAge: lead.businessAge || "N/A",
-      description: lead.description || "N/A",
       createdAt: new Date(lead.createdAt).toLocaleDateString(),
       updatedAt: new Date(lead.updatedAt).toLocaleDateString()
     };
@@ -360,7 +359,6 @@ export class DataExporter {
       reviewCount: "Reviews",
       status: "Status",
       businessAge: "Age",
-      description: "Description",
       createdAt: "Created",
       updatedAt: "Updated"
     };

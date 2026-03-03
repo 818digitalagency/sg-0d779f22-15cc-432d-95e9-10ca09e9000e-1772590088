@@ -20,7 +20,9 @@ import {
   ExternalLink,
   Search,
   X,
-  Building2
+  Building2,
+  TrendingUp,
+  Calendar
 } from "lucide-react";
 import { useState } from "react";
 import type { Lead } from "@/types/lead";
@@ -30,55 +32,52 @@ const MOCK_LEADS: Lead[] = [
   {
     id: "1",
     businessName: "Maritime Tech Solutions",
-    contactName: "Sarah Johnson",
-    email: "sarah@maritimetech.ca",
+    contactName: "John Smith",
+    email: "john@maritimetech.ca",
     phone: "(506) 555-0123",
     address: "123 Main St",
-    city: "Fredericton",
-    postalCode: "E3B 1A1",
-    website: "https://maritimetech.ca",
-    description: "Leading IT consulting firm specializing in cloud solutions, cybersecurity, and digital transformation",
+    city: "Moncton",
+    postalCode: "E1C 1A1",
     category: "IT & Technology",
-    industry: "IT & Technology",
+    industry: "IT Services",
     businessAge: 8,
-    estimatedAge: 8,
-    googleRating: 4.8,
-    rating: 4.8,
+    rating: 4.5,
     reviewCount: 42,
+    website: "https://maritimetech.ca",
+    businessDescription: "Full-service IT consulting and managed services",
     dataSource: "Google Business",
-    leadScore: 92,
-    websiteQuality: 88,
+    leadScore: 85,
+    websiteQualityScore: 72,
     status: "Not Contacted",
     engagementStatus: "Not Contacted",
-    tags: ["High Priority", "Tech"],
-    createdAt: "2026-02-15T10:00:00Z",
-    updatedAt: "2026-03-01T15:30:00Z"
+    tags: ["tech", "priority"],
+    lastContactDate: "2026-02-20T14:00:00Z",
+    createdAt: "2026-01-15T10:00:00Z",
+    updatedAt: "2026-02-25T14:00:00Z"
   },
   {
     id: "2",
-    businessName: "Atlantic Legal Group",
-    contactName: "Michael Chen",
-    email: "contact@atlanticlegal.ca",
-    phone: "(506) 555-0456",
+    businessName: "Atlantic Accounting Services",
+    contactName: "Sarah Johnson",
+    email: "sarah@atlanticaccounting.ca",
+    phone: "(506) 555-0124",
     address: "456 King St",
-    city: "Moncton",
-    postalCode: "E1C 2B2",
-    website: "https://atlanticlegal.ca",
-    description: "Full-service law firm with expertise in corporate law, real estate, and family law",
-    category: "Law Firm",
-    industry: "Law Firm",
+    city: "Saint John",
+    postalCode: "E2L 2B2",
+    category: "Accounting",
+    industry: "Professional Services",
     businessAge: 15,
-    estimatedAge: 15,
-    googleRating: 4.9,
-    rating: 4.9,
-    reviewCount: 87,
-    dataSource: "NB Corporate Registry",
-    leadScore: 88,
-    websiteQuality: 92,
-    status: "Proposal Sent",
-    engagementStatus: "Proposal Sent",
-    tags: ["Professional Services"],
-    lastContactDate: "2026-02-28T09:00:00Z",
+    rating: 4.8,
+    reviewCount: 67,
+    website: "https://atlanticaccounting.ca",
+    businessDescription: "Comprehensive accounting and tax services",
+    dataSource: "LinkedIn",
+    leadScore: 92,
+    websiteQualityScore: 45,
+    status: "Not Contacted",
+    engagementStatus: "Not Contacted",
+    tags: ["accounting", "established"],
+    lastContactDate: "2026-02-15T09:00:00Z",
     createdAt: "2026-01-20T14:00:00Z",
     updatedAt: "2026-02-28T09:00:00Z"
   }
@@ -232,8 +231,8 @@ export default function MapViewPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {selectedLead.description && (
-                  <p className="text-slate-600">{selectedLead.description}</p>
+                {selectedLead.businessDescription && (
+                  <p className="text-slate-600">{selectedLead.businessDescription}</p>
                 )}
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -274,28 +273,32 @@ export default function MapViewPage() {
                   <div>
                     <h4 className="text-sm font-semibold text-slate-900 mb-2">Business Metrics</h4>
                     <div className="space-y-2">
-                      {selectedLead.googleRating && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                          <span className="font-medium">{selectedLead.googleRating}</span>
-                          <span className="text-slate-600">({selectedLead.reviewCount} reviews)</span>
-                        </div>
+                      {selectedLead.businessDescription ? (
+                        <p className="text-sm text-slate-600">{selectedLead.businessDescription}</p>
+                      ) : (
+                        <p className="text-sm text-slate-500 italic">No description available</p>
                       )}
-                      {selectedLead.estimatedAge && (
-                        <div className="text-sm text-slate-600">
-                          Est. Age: {selectedLead.estimatedAge} years
+                      
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">{selectedLead.rating?.toFixed(1) || "N/A"}</span>
+                          <span className="text-slate-500">
+                            ({selectedLead.reviewCount || 0})
+                          </span>
                         </div>
-                      )}
-                      {selectedLead.websiteQuality && (
-                        <div className="text-sm text-slate-600">
-                          Website Quality: {selectedLead.websiteQuality}/100
+                        
+                        <div className="flex items-center gap-1">
+                          <Globe className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium">Score: {selectedLead.leadScore}</span>
                         </div>
-                      )}
-                      <div className="text-sm">
-                        <span className="text-slate-600">Status: </span>
-                        <Badge className="bg-slate-100 text-slate-700">
-                          {selectedLead.engagementStatus}
-                        </Badge>
+                        
+                        {selectedLead.websiteQualityScore && (
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="h-4 w-4 text-green-600" />
+                            <span className="text-slate-600">Web: {selectedLead.websiteQualityScore}%</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

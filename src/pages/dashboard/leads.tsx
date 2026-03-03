@@ -59,138 +59,127 @@ const MOCK_LEADS: Lead[] = [
   {
     id: "1",
     businessName: "Maritime Tech Solutions",
-    contactName: "Sarah Johnson",
-    email: "sarah@maritimetech.ca",
+    contactName: "John Smith",
+    email: "john@maritimetech.ca",
     phone: "(506) 555-0123",
     address: "123 Main St",
-    city: "Fredericton",
-    postalCode: "E3B 1A1",
-    website: "https://maritimetech.ca",
-    description: "Leading IT consulting firm",
+    city: "Moncton",
+    postalCode: "E1C 1A1",
     category: "IT & Technology",
-    industry: "IT & Technology",
+    industry: "IT Services",
     businessAge: 8,
-    estimatedAge: 8,
-    googleRating: 4.8,
-    rating: 4.8,
+    rating: 4.5,
     reviewCount: 42,
+    website: "https://maritimetech.ca",
+    businessDescription: "Full-service IT consulting and managed services",
     dataSource: "Google Business",
-    leadScore: 92,
-    websiteQuality: 88,
+    leadScore: 85,
+    websiteQualityScore: 72,
     status: "Not Contacted",
     engagementStatus: "Not Contacted",
-    tags: ["High Priority", "Tech"],
-    lastContactDate: undefined,
-    createdAt: "2026-02-15T10:00:00Z",
-    updatedAt: "2026-03-01T15:30:00Z"
+    tags: ["tech", "priority"],
+    lastContactDate: "2026-02-20T14:00:00Z",
+    createdAt: "2026-02-18T10:00:00Z",
+    updatedAt: "2026-02-25T14:00:00Z"
   },
   {
     id: "2",
-    businessName: "Atlantic Legal Group",
-    contactName: "Michael Chen",
-    email: "contact@atlanticlegal.ca",
-    phone: "(506) 555-0456",
+    businessName: "Atlantic Accounting Services",
+    contactName: "Sarah Johnson",
+    email: "sarah@atlanticaccounting.ca",
+    phone: "(506) 555-0124",
     address: "456 King St",
-    city: "Moncton",
-    postalCode: "E1C 2B2",
-    website: "https://atlanticlegal.ca",
-    description: "Full-service law firm",
-    category: "Law Firm",
-    industry: "Law Firm",
+    city: "Saint John",
+    postalCode: "E2L 2B2",
+    category: "Accounting",
+    industry: "Professional Services",
     businessAge: 15,
-    estimatedAge: 15,
-    googleRating: 4.9,
-    rating: 4.9,
-    reviewCount: 87,
-    dataSource: "NB Corporate Registry",
-    leadScore: 88,
-    websiteQuality: 92,
-    status: "Proposal Sent",
-    engagementStatus: "Proposal Sent",
-    tags: ["Professional Services"],
-    lastContactDate: "2026-02-28T09:00:00Z",
-    createdAt: "2026-01-20T14:00:00Z",
-    updatedAt: "2026-02-28T09:00:00Z"
+    rating: 4.8,
+    reviewCount: 67,
+    website: "https://atlanticaccounting.ca",
+    businessDescription: "Comprehensive accounting and tax services",
+    dataSource: "LinkedIn",
+    leadScore: 92,
+    websiteQualityScore: 45,
+    status: "Not Contacted",
+    engagementStatus: "Not Contacted",
+    tags: ["accounting", "established"],
+    lastContactDate: "2026-02-22T10:00:00Z",
+    createdAt: "2026-02-19T11:00:00Z",
+    updatedAt: "2026-02-26T10:00:00Z"
   },
   {
     id: "3",
-    businessName: "Bay View Realty",
-    contactName: "Jennifer Smith",
-    email: "info@bayviewrealty.ca",
-    phone: "(506) 555-0789",
-    address: "789 Water St",
-    city: "Saint John",
-    postalCode: "E2L 3C3",
-    website: "https://bayviewrealty.ca",
-    description: "Premier real estate agency",
+    businessName: "Coastal Real Estate Group",
+    contactName: "Michael Brown",
+    email: "michael@coastalrealestate.ca",
+    phone: "(506) 555-0125",
+    address: "789 Queen St",
+    city: "Fredericton",
+    postalCode: "E3B 3C3",
     category: "Real Estate",
     industry: "Real Estate",
-    businessAge: 12,
-    estimatedAge: 12,
-    googleRating: 4.6,
-    rating: 4.6,
-    reviewCount: 134,
-    dataSource: "Chamber of Commerce",
-    leadScore: 85,
-    websiteQuality: 75,
-    status: "Opened",
-    engagementStatus: "Opened",
-    tags: ["Real Estate", "Warm Lead"],
-    lastContactDate: "2026-03-01T11:30:00Z",
-    createdAt: "2026-02-10T08:00:00Z",
-    updatedAt: "2026-03-01T11:30:00Z"
+    businessAge: 5,
+    rating: 4.3,
+    reviewCount: 28,
+    website: "https://coastalrealestate.ca",
+    businessDescription: "Residential and commercial real estate",
+    dataSource: "Google Business",
+    leadScore: 78,
+    websiteQualityScore: 88,
+    status: "Not Contacted",
+    engagementStatus: "Not Contacted",
+    tags: ["real-estate", "growing"],
+    lastContactDate: "2026-02-24T16:00:00Z",
+    createdAt: "2026-02-20T09:00:00Z",
+    updatedAt: "2026-02-27T16:00:00Z"
   },
   {
     id: "4",
-    businessName: "Northern Manufacturing Inc",
-    email: "sales@northernmfg.ca",
-    phone: "(506) 555-0321",
-    address: "321 Industrial Blvd",
-    city: "Bathurst",
-    postalCode: "E2A 4D4",
-    website: "https://northernmfg.ca",
-    description: "Industrial manufacturing",
-    category: "Manufacturing",
-    industry: "Manufacturing",
-    businessAge: 22,
-    estimatedAge: 22,
-    googleRating: 4.3,
-    rating: 4.3,
-    reviewCount: 28,
-    dataSource: "Business Directory",
-    leadScore: 79,
-    websiteQuality: 68,
+    businessName: "NB Legal Partners",
+    email: "contact@nblegal.ca",
+    phone: "(506) 555-0126",
+    address: "321 Brunswick St",
+    city: "Moncton",
+    postalCode: "E1C 4D4",
+    category: "Law Firm",
+    industry: "Legal Services",
+    businessAge: 12,
+    rating: 4.6,
+    reviewCount: 51,
+    website: "https://nblegal.ca",
+    businessDescription: "Full-service law firm specializing in business law",
+    dataSource: "Manual Entry",
+    leadScore: 88,
+    websiteQualityScore: 65,
     status: "Not Contacted",
     engagementStatus: "Not Contacted",
-    tags: ["Manufacturing"],
-    createdAt: "2026-02-05T12:00:00Z",
-    updatedAt: "2026-02-20T16:00:00Z"
+    tags: ["legal", "b2b"],
+    lastContactDate: "2026-02-23T12:00:00Z",
+    createdAt: "2026-02-21T13:00:00Z",
+    updatedAt: "2026-02-28T12:00:00Z"
   },
   {
     id: "5",
-    businessName: "Acadian Healthcare Clinic",
-    contactName: "Dr. Marie Leblanc",
-    email: "info@acadianhealthcare.ca",
-    phone: "(506) 555-0654",
-    address: "654 University Ave",
-    city: "Moncton",
-    postalCode: "E1A 5E5",
-    website: "https://acadianhealthcare.ca",
-    description: "Family medicine clinic",
-    category: "Healthcare",
-    industry: "Healthcare",
-    businessAge: 5,
-    estimatedAge: 5,
-    googleRating: 4.7,
-    rating: 4.7,
-    reviewCount: 96,
+    businessName: "Harbor Manufacturing Ltd",
+    contactName: "David Wilson",
+    email: "david@harbormanufacturing.ca",
+    phone: "(506) 555-0127",
+    address: "555 Industrial Pkwy",
+    city: "Saint John",
+    postalCode: "E2M 5E5",
+    category: "Manufacturing",
+    industry: "Manufacturing",
+    businessAge: 22,
+    rating: 4.1,
+    reviewCount: 19,
     dataSource: "Google Business",
-    leadScore: 81,
-    websiteQuality: 82,
-    status: "Follow-up Scheduled",
-    engagementStatus: "Follow-up Scheduled",
-    tags: ["Healthcare", "High Priority"],
-    lastContactDate: "2026-02-25T14:00:00Z",
+    leadScore: 71,
+    websiteQualityScore: 38,
+    status: "Not Contacted",
+    engagementStatus: "Not Contacted",
+    tags: ["manufacturing", "legacy"],
+    lastContactDate: "2026-02-21T14:00:00Z",
     createdAt: "2026-02-18T10:00:00Z",
     updatedAt: "2026-02-25T14:00:00Z"
   }
@@ -262,12 +251,11 @@ export default function LeadsPage() {
   const getStatusColor = (status: EngagementStatus) => {
     const colors: Record<EngagementStatus, string> = {
       "Not Contacted": "bg-slate-100 text-slate-700",
-      "Proposal Sent": "bg-blue-100 text-blue-700",
-      "Opened": "bg-purple-100 text-purple-700",
-      "Replied": "bg-green-100 text-green-700",
-      "Follow-up Scheduled": "bg-amber-100 text-amber-700",
+      "Contacted": "bg-blue-100 text-blue-700",
+      "Responded": "bg-purple-100 text-purple-700",
+      "Qualified": "bg-amber-100 text-amber-700",
       "Converted": "bg-emerald-100 text-emerald-700",
-      "Not Interested": "bg-red-100 text-red-700"
+      "Lost": "bg-red-100 text-red-700"
     };
     return colors[status];
   };
@@ -343,6 +331,15 @@ export default function LeadsPage() {
     { value: "businessAge", label: "Business Age" }
   ];
 
+  const statusColors: Record<EngagementStatus, string> = {
+    "Not Contacted": "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
+    "Contacted": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    "Responded": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    "Qualified": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    "Converted": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    "Lost": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+  };
+
   return (
     <>
       <SEO title="Leads - Opportunity Finder" />
@@ -415,12 +412,11 @@ export default function LeadsPage() {
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="Not Contacted">Not Contacted</SelectItem>
-                    <SelectItem value="Proposal Sent">Proposal Sent</SelectItem>
-                    <SelectItem value="Opened">Opened</SelectItem>
-                    <SelectItem value="Replied">Replied</SelectItem>
-                    <SelectItem value="Follow-up Scheduled">Follow-up Scheduled</SelectItem>
+                    <SelectItem value="Contacted">Contacted</SelectItem>
+                    <SelectItem value="Responded">Responded</SelectItem>
+                    <SelectItem value="Qualified">Qualified</SelectItem>
                     <SelectItem value="Converted">Converted</SelectItem>
-                    <SelectItem value="Not Interested">Not Interested</SelectItem>
+                    <SelectItem value="Lost">Lost</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -511,13 +507,13 @@ export default function LeadsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {lead.googleRating && (
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                              <span className="text-sm font-medium">{lead.googleRating}</span>
-                              <span className="text-xs text-slate-500">({lead.reviewCount})</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{lead.rating?.toFixed(1) || "N/A"}</span>
+                            <span className="text-sm text-slate-500">
+                              ({lead.reviewCount || 0} reviews)
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(lead.leadScore)}`}>

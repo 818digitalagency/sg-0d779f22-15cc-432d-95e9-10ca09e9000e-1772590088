@@ -5,7 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import type { Lead } from "@/types/lead";
+import type { Lead, EngagementStatus } from "@/types/lead";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
@@ -115,13 +115,12 @@ export class LeadService {
         address: lead.address,
         city: lead.city || "",
         postal_code: lead.postalCode,
-        province: lead.province || "NB",
         industry: lead.industry || "",
         business_description: lead.businessDescription,
         business_age: lead.businessAge,
         rating: lead.rating,
         review_count: lead.reviewCount,
-        social_media: lead.socialMedia,
+        social_media: lead.socialMedia as any,
         data_source: lead.dataSource,
         lead_score: lead.leadScore || 0,
         website_quality_score: lead.websiteQualityScore,
@@ -162,13 +161,12 @@ export class LeadService {
         address: updates.address,
         city: updates.city,
         postal_code: updates.postalCode,
-        province: updates.province,
         industry: updates.industry,
         business_description: updates.businessDescription,
         business_age: updates.businessAge,
         rating: updates.rating,
         review_count: updates.reviewCount,
-        social_media: updates.socialMedia,
+        social_media: updates.socialMedia as any,
         data_source: updates.dataSource,
         lead_score: updates.leadScore,
         website_quality_score: updates.websiteQualityScore,
@@ -316,17 +314,18 @@ export class LeadService {
       address: row.address || undefined,
       city: row.city,
       postalCode: row.postal_code || undefined,
-      province: row.province,
+      province: undefined,
       industry: row.industry,
       businessDescription: row.business_description || undefined,
       businessAge: row.business_age || undefined,
       rating: row.rating || undefined,
       reviewCount: row.review_count || undefined,
-      socialMedia: row.social_media || undefined,
+      socialMedia: row.social_media as any,
       dataSource: row.data_source || undefined,
       leadScore: row.lead_score,
       websiteQualityScore: row.website_quality_score || undefined,
       status: row.status,
+      engagementStatus: row.status as EngagementStatus,
       tags: row.tags || [],
       lastContactDate: row.last_contact_date || undefined,
       createdAt: row.created_at,

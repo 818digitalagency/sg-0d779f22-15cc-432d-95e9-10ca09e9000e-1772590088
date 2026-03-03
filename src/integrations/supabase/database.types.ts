@@ -56,6 +56,7 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          conversion_rate: number | null
           created_at: string | null
           description: string | null
           emails_bounced: number | null
@@ -76,6 +77,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversion_rate?: number | null
           created_at?: string | null
           description?: string | null
           emails_bounced?: number | null
@@ -96,6 +98,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversion_rate?: number | null
           created_at?: string | null
           description?: string | null
           emails_bounced?: number | null
@@ -277,11 +280,13 @@ export type Database = {
           province: string | null
           rating: number | null
           review_count: number | null
+          social_media: Json | null
           status: string
           tags: string[] | null
           updated_at: string | null
           user_id: string
           website: string | null
+          website_quality_score: number | null
         }
         Insert: {
           address?: string | null
@@ -307,11 +312,13 @@ export type Database = {
           province?: string | null
           rating?: number | null
           review_count?: number | null
+          social_media?: Json | null
           status?: string
           tags?: string[] | null
           updated_at?: string | null
           user_id: string
           website?: string | null
+          website_quality_score?: number | null
         }
         Update: {
           address?: string | null
@@ -337,11 +344,13 @@ export type Database = {
           province?: string | null
           rating?: number | null
           review_count?: number | null
+          social_media?: Json | null
           status?: string
           tags?: string[] | null
           updated_at?: string | null
           user_id?: string
           website?: string | null
+          website_quality_score?: number | null
         }
         Relationships: []
       }
@@ -448,14 +457,17 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          activity_alerts: boolean | null
           api_enabled: boolean | null
           api_key: string | null
           api_rate_limit: number | null
           created_at: string | null
+          default_export_format: string | null
           digest_frequency: string | null
           email_notifications: boolean | null
           export_format: string | null
           language: string | null
+          marketing_emails: boolean | null
           push_notifications: boolean | null
           sms_notifications: boolean | null
           theme: string | null
@@ -464,16 +476,20 @@ export type Database = {
           two_factor_secret: string | null
           updated_at: string | null
           user_id: string
+          weekly_digest: boolean | null
         }
         Insert: {
+          activity_alerts?: boolean | null
           api_enabled?: boolean | null
           api_key?: string | null
           api_rate_limit?: number | null
           created_at?: string | null
+          default_export_format?: string | null
           digest_frequency?: string | null
           email_notifications?: boolean | null
           export_format?: string | null
           language?: string | null
+          marketing_emails?: boolean | null
           push_notifications?: boolean | null
           sms_notifications?: boolean | null
           theme?: string | null
@@ -482,16 +498,20 @@ export type Database = {
           two_factor_secret?: string | null
           updated_at?: string | null
           user_id: string
+          weekly_digest?: boolean | null
         }
         Update: {
+          activity_alerts?: boolean | null
           api_enabled?: boolean | null
           api_key?: string | null
           api_rate_limit?: number | null
           created_at?: string | null
+          default_export_format?: string | null
           digest_frequency?: string | null
           email_notifications?: boolean | null
           export_format?: string | null
           language?: string | null
+          marketing_emails?: boolean | null
           push_notifications?: boolean | null
           sms_notifications?: boolean | null
           theme?: string | null
@@ -500,6 +520,7 @@ export type Database = {
           two_factor_secret?: string | null
           updated_at?: string | null
           user_id?: string
+          weekly_digest?: boolean | null
         }
         Relationships: []
       }

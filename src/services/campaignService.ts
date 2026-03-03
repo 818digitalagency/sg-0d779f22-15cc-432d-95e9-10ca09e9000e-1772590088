@@ -91,16 +91,17 @@ export class CampaignService {
         user_id: user.id,
         name: campaign.name || "Untitled Campaign",
         description: campaign.description,
+        subject: campaign.name || "Untitled Campaign",
         status: campaign.status || "draft",
         emails_sent: campaign.emailsSent || 0,
         emails_opened: campaign.emailsOpened || 0,
         emails_clicked: campaign.emailsClicked || 0,
         emails_replied: campaign.emailsReplied || 0,
         emails_bounced: campaign.emailsBounced || 0,
+        emails_delivered: campaign.emailsSent || 0,
         conversion_rate: campaign.conversionRate || 0,
         scheduled_at: campaign.scheduledAt,
-        started_at: campaign.startedAt,
-        completed_at: campaign.completedAt
+        total_recipients: 0
       };
 
       const { data, error } = await supabase
@@ -135,10 +136,10 @@ export class CampaignService {
         emails_clicked: updates.emailsClicked,
         emails_replied: updates.emailsReplied,
         emails_bounced: updates.emailsBounced,
+        emails_delivered: updates.emailsSent,
         conversion_rate: updates.conversionRate,
         scheduled_at: updates.scheduledAt,
-        started_at: updates.startedAt,
-        completed_at: updates.completedAt
+        total_recipients: 0
       };
 
       // Remove undefined values
@@ -244,7 +245,7 @@ export class CampaignService {
       userId: row.user_id,
       name: row.name,
       description: row.description || undefined,
-      status: row.status,
+      status: row.status as "draft" | "scheduled" | "active" | "paused" | "completed",
       emailsSent: row.emails_sent,
       emailsOpened: row.emails_opened,
       emailsClicked: row.emails_clicked,
@@ -252,8 +253,8 @@ export class CampaignService {
       emailsBounced: row.emails_bounced,
       conversionRate: row.conversion_rate,
       scheduledAt: row.scheduled_at || undefined,
-      startedAt: row.started_at || undefined,
-      completedAt: row.completed_at || undefined,
+      startedAt: undefined,
+      completedAt: undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };

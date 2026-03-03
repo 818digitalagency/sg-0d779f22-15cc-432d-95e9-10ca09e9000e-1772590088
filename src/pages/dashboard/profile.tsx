@@ -34,85 +34,92 @@ import {
   Target,
   Zap
 } from "lucide-react";
-import type { User as UserType, UserSettings, ActivityLog } from "@/types/user";
-
-// Mock current user data
-const CURRENT_USER: UserType = {
-  id: "user-001",
-  email: "john.doe@example.com",
-  firstName: "John",
-  lastName: "Doe",
-  role: "admin",
-  avatar: "",
-  phone: "+1 (506) 555-0123",
-  company: "Maritime Growth Solutions",
-  timezone: "America/Moncton",
-  language: "en",
-  emailNotifications: true,
-  browserNotifications: true,
-  weeklyReports: true,
-  createdAt: "2025-11-15T10:00:00Z",
-  lastLogin: "2026-03-03T22:45:00Z",
-  subscription: {
-    plan: "pro",
-    status: "active",
-    billingCycle: "annual",
-    nextBillingDate: "2027-03-03T00:00:00Z"
-  },
-  stats: {
-    totalLeads: 2234,
-    emailsSent: 8945,
-    conversions: 267,
-    revenue: 183400
-  },
-  preferences: {
-    defaultView: "table",
-    itemsPerPage: 25,
-    darkMode: false,
-    compactMode: false
-  }
-};
-
-const MOCK_ACTIVITY: ActivityLog[] = [
-  {
-    id: "1",
-    userId: "user-001",
-    action: "lead_created",
-    description: "Created new lead: Maritime Tech Solutions",
-    timestamp: "2026-03-03T22:30:00Z"
-  },
-  {
-    id: "2",
-    userId: "user-001",
-    action: "email_sent",
-    description: "Sent campaign email to 45 leads",
-    timestamp: "2026-03-03T21:15:00Z"
-  },
-  {
-    id: "3",
-    userId: "user-001",
-    action: "proposal_generated",
-    description: "Generated AI proposal for Atlantic Construction Inc",
-    timestamp: "2026-03-03T20:45:00Z"
-  },
-  {
-    id: "4",
-    userId: "user-001",
-    action: "export_data",
-    description: "Exported 150 leads to CSV",
-    timestamp: "2026-03-03T18:30:00Z"
-  },
-  {
-    id: "5",
-    userId: "user-001",
-    action: "settings_updated",
-    description: "Updated notification preferences",
-    timestamp: "2026-03-03T16:20:00Z"
-  }
-];
+import type { User as UserType, ActivityLog } from "@/types/user";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserType>(CURRENT_USER);
+  // Mock user data
+  const [user, setUser] = useState<UserType>({
+    id: "1",
+    email: "user@opportunityfinder.ca",
+    firstName: "John",
+    lastName: "Smith",
+    role: "admin",
+    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+    phone: "+1 (506) 555-0123",
+    company: "Opportunity Finder Inc.",
+    timezone: "America/Moncton",
+    language: "en",
+    emailNotifications: true,
+    browserNotifications: true,
+    weeklyReports: true,
+    createdAt: "2026-01-15T10:00:00Z",
+    lastLogin: new Date().toISOString(),
+    subscription: {
+      plan: "pro",
+      status: "active",
+      billingCycle: "monthly",
+      nextBillingDate: "2026-04-01T00:00:00Z"
+    },
+    stats: {
+      totalLeads: 1247,
+      emailsSent: 3891,
+      conversions: 156,
+      revenue: 78420
+    },
+    preferences: {
+      defaultView: "table",
+      itemsPerPage: 25,
+      darkMode: false,
+      compactMode: false
+    }
+  });
+
+  const [activityLogs] = useState<ActivityLog[]>([
+    {
+      id: "1",
+      userId: "1",
+      action: "created",
+      resource: "lead",
+      resourceId: "lead-123",
+      details: "Added new lead: Maritime Tech Solutions",
+      timestamp: "2026-03-03T14:30:00Z"
+    },
+    {
+      id: "2",
+      userId: "1",
+      action: "sent",
+      resource: "email",
+      resourceId: "email-456",
+      details: "Sent proposal to Atlantic Accounting Services",
+      timestamp: "2026-03-03T13:15:00Z"
+    },
+    {
+      id: "3",
+      userId: "1",
+      action: "updated",
+      resource: "campaign",
+      resourceId: "campaign-789",
+      details: "Modified campaign: Spring 2026 Outreach",
+      timestamp: "2026-03-03T11:45:00Z"
+    },
+    {
+      id: "4",
+      userId: "1",
+      action: "exported",
+      resource: "leads",
+      details: "Exported 150 leads to CSV",
+      timestamp: "2026-03-03T10:20:00Z"
+    },
+    {
+      id: "5",
+      userId: "1",
+      action: "logged_in",
+      resource: "auth",
+      details: "Successful login from IP 192.168.1.100",
+      timestamp: "2026-03-03T09:00:00Z"
+    }
+  ]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -125,7 +132,6 @@ export default function ProfilePage() {
   };
 
   const handleCancel = () => {
-    setUser(CURRENT_USER);
     setIsEditing(false);
   };
 
@@ -172,12 +178,14 @@ export default function ProfilePage() {
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Avatar */}
                 <div className="flex flex-col items-center gap-4">
-                  <Avatar className="h-32 w-32">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback className="text-3xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                      {user.firstName[0]}{user.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="flex items-center gap-6">
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+                      <AvatarFallback className="text-2xl">
+                        {user.firstName[0]}{user.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                   {isEditing && (
                     <Button variant="outline" size="sm">
                       <Upload className="h-4 w-4 mr-2" />
@@ -669,25 +677,19 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {MOCK_ACTIVITY.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    {activityLogs.map((log) => (
+                      <div key={log.id} className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                         <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                           <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-slate-900 dark:text-white">{activity.description}</p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                            {new Date(activity.timestamp).toLocaleString("en-CA", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
+                          <p className="font-medium text-slate-900">
+                            {log.action.charAt(0).toUpperCase() + log.action.slice(1)} {log.resource}
                           </p>
+                          <p className="text-sm text-slate-600">{log.details}</p>
                         </div>
                         <Badge variant="secondary" className="flex-shrink-0">
-                          {activity.action.replace("_", " ")}
+                          {log.action.replace("_", " ")}
                         </Badge>
                       </div>
                     ))}

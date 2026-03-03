@@ -104,8 +104,8 @@ export class AILeadScorer {
     let score = 0;
 
     // Base score from website quality metric
-    if (lead.websiteQuality !== undefined) {
-      score = lead.websiteQuality;
+    if (lead.websiteQualityScore !== undefined) {
+      score = lead.websiteQualityScore;
     } else if (lead.website) {
       score = 50; // Has website but quality not assessed
     } else {
@@ -135,7 +135,7 @@ export class AILeadScorer {
     if (lead.website) score += 25;
 
     // Google Business Profile
-    if (lead.googleRating && lead.googleRating > 0) score += 25;
+    if (lead.rating && lead.rating > 0) score += 25;
 
     // Reviews count
     if (lead.reviewCount) {
@@ -147,8 +147,12 @@ export class AILeadScorer {
 
     // Social media presence
     if (lead.socialMedia) {
-      const platforms = Object.values(lead.socialMedia).filter(url => url).length;
-      score += Math.min(platforms * 7, 25);
+      const socialCount = Object.keys(lead.socialMedia).length;
+      if (socialCount >= 3) {
+        score += 5;
+      } else if (socialCount >= 1) {
+        score += 3;
+      }
     }
 
     return Math.min(score, 100);
@@ -224,10 +228,10 @@ export class AILeadScorer {
     }
 
     // Rating indicates customer satisfaction and growth potential
-    if (lead.googleRating) {
-      if (lead.googleRating >= 4.5) score += 10;
-      else if (lead.googleRating >= 4.0) score += 5;
-      else if (lead.googleRating < 3.0) score -= 10;
+    if (lead.rating) {
+      if (lead.rating >= 4.5) score += 10;
+      else if (lead.rating >= 4.0) score += 5;
+      else if (lead.rating < 3.0) score -= 10;
     }
 
     return Math.min(Math.max(score, 0), 100);
@@ -360,9 +364,9 @@ export class AILeadScorer {
     if (lead.email) confidence += 10;
     if (lead.phone) confidence += 10;
     if (lead.website) confidence += 15;
-    if (lead.googleRating !== undefined) confidence += 10;
+    if (lead.rating !== undefined) confidence += 10;
     if (lead.businessAge !== undefined) confidence += 10;
-    if (lead.websiteQuality !== undefined) confidence += 15;
+    if (lead.websiteQualityScore !== undefined) confidence += 15;
 
     return Math.min(confidence, 100);
   }
@@ -391,7 +395,7 @@ export class AILeadScorer {
     }
 
     // Digital presence insights
-    if (lead.googleRating && lead.googleRating >= 4.5 && lead.reviewCount && lead.reviewCount > 50) {
+    if (lead.rating && lead.rating >= 4.5 && lead.reviewCount && lead.reviewCount > 50) {
       insights.push({
         category: "Reputation",
         insight: "Strong online reputation - excellent partner for case studies",
@@ -473,11 +477,11 @@ export class AILeadScorer {
   private calculateReputationScore(lead: Lead): number {
     let score = 50;
     
-    if (lead.googleRating) {
-      if (lead.googleRating >= 4.5) score = 95;
-      else if (lead.googleRating >= 4.0) score = 85;
-      else if (lead.googleRating >= 3.5) score = 70;
-      else if (lead.googleRating >= 3.0) score = 55;
+    if (lead.rating) {
+      if (lead.rating >= 4.5) score = 95;
+      else if (lead.rating >= 4.0) score = 85;
+      else if (lead.rating >= 3.5) score = 70;
+      else if (lead.rating >= 3.0) score = 55;
       else score = 40;
     }
 
@@ -502,7 +506,7 @@ export class AILeadScorer {
     if (result.factors.websiteQuality < 50) {
       factors.push("Poor or missing website - high opportunity");
     }
-    if (lead.googleRating && lead.googleRating >= 4.5) {
+    if (lead.rating && lead.rating >= 4.5) {
       factors.push("Excellent reputation with strong reviews");
     }
     if (lead.businessAge && lead.businessAge > 10) {

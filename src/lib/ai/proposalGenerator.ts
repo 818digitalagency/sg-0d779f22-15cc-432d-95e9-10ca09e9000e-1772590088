@@ -185,10 +185,10 @@ export class AIProposalGenerator {
     const params: ProposalParams = {
       businessName: lead.businessName,
       contactName: lead.contactName,
-      industry: lead.category,
+      industry: lead.category || lead.industry,
       city: lead.city,
       businessAge: lead.businessAge,
-      websiteQuality: lead.websiteQuality,
+      websiteQuality: lead.websiteQualityScore,
       serviceOffering: this.getServiceOfferingForTemplate(options.template),
       tone: options.tone as any,
       length: "medium"
@@ -295,19 +295,19 @@ export class AIProposalGenerator {
   /**
    * Detect pain points from business data
    */
-  private detectPainPoints(websiteQuality?: number, businessAge?: number): string[] {
+  private detectPainPoints(websiteQualityScore?: number, businessAge?: number): string[] {
     const painPoints: string[] = [];
 
-    if (websiteQuality !== undefined && websiteQuality < 50) {
+    if (websiteQualityScore !== undefined && websiteQualityScore < 50) {
       painPoints.push("outdated_website");
     }
-    if (websiteQuality !== undefined && websiteQuality < 30) {
+    if (websiteQualityScore !== undefined && websiteQualityScore < 30) {
       painPoints.push("poor_mobile_experience");
     }
-    if (websiteQuality === 0) {
+    if (websiteQualityScore === 0) {
       painPoints.push("no_online_presence");
     }
-    if (businessAge !== undefined && businessAge > 10 && websiteQuality !== undefined && websiteQuality < 60) {
+    if (businessAge !== undefined && businessAge > 10 && websiteQualityScore !== undefined && websiteQualityScore < 60) {
       painPoints.push("outdated_technology");
     }
 

@@ -42,9 +42,31 @@ export class ProfileService {
         firstName: data.full_name?.split(" ")[0] || "",
         lastName: data.full_name?.split(" ").slice(1).join(" ") || "",
         avatarUrl: data.avatar_url || undefined,
-        role: "admin", // Defaulting to admin for now as per role type
+        role: "admin",
+        timezone: "America/Moncton",
+        language: "en",
+        emailNotifications: true,
+        browserNotifications: true,
+        weeklyReports: true,
         createdAt: data.created_at,
-        lastLogin: new Date().toISOString()
+        lastLogin: new Date().toISOString(),
+        subscription: {
+          plan: "free",
+          status: "active",
+          billingCycle: "monthly"
+        },
+        stats: {
+          totalLeads: 0,
+          emailsSent: 0,
+          conversions: 0,
+          revenue: 0
+        },
+        preferences: {
+          defaultView: "table",
+          itemsPerPage: 25,
+          darkMode: false,
+          compactMode: false
+        }
       };
 
       return { data: user, error: null };
@@ -95,9 +117,31 @@ export class ProfileService {
         firstName: data.full_name?.split(" ")[0] || "",
         lastName: data.full_name?.split(" ").slice(1).join(" ") || "",
         avatarUrl: data.avatar_url || undefined,
-        role: "admin", // Defaulting to admin for now as per role type
+        role: "admin",
+        timezone: "America/Moncton",
+        language: "en",
+        emailNotifications: true,
+        browserNotifications: true,
+        weeklyReports: true,
         createdAt: data.created_at,
-        lastLogin: new Date().toISOString()
+        lastLogin: new Date().toISOString(),
+        subscription: {
+          plan: "free",
+          status: "active",
+          billingCycle: "monthly"
+        },
+        stats: {
+          totalLeads: 0,
+          emailsSent: 0,
+          conversions: 0,
+          revenue: 0
+        },
+        preferences: {
+          defaultView: "table",
+          itemsPerPage: 25,
+          darkMode: false,
+          compactMode: false
+        }
       };
 
       return { data: user, error: null };
@@ -131,6 +175,7 @@ export class ProfileService {
             data: {
               userId: user.id,
               emailNotifications: true,
+              pushNotifications: false,
               marketingEmails: false,
               activityAlerts: true,
               weeklyDigest: true,
@@ -149,13 +194,14 @@ export class ProfileService {
       const settings: UserSettings = {
         userId: data.user_id,
         emailNotifications: data.email_notifications,
+        pushNotifications: false,
         marketingEmails: data.marketing_emails,
         activityAlerts: data.activity_alerts,
         weeklyDigest: data.weekly_digest,
-        theme: data.theme,
+        theme: data.theme as "light" | "dark" | "auto",
         timezone: data.timezone,
         language: data.language,
-        defaultExportFormat: data.default_export_format
+        defaultExportFormat: data.default_export_format as "csv" | "excel" | "pdf"
       };
 
       return { data: settings, error: null };
@@ -206,13 +252,14 @@ export class ProfileService {
       const updatedSettings: UserSettings = {
         userId: data.user_id,
         emailNotifications: data.email_notifications,
+        pushNotifications: false,
         marketingEmails: data.marketing_emails,
         activityAlerts: data.activity_alerts,
         weeklyDigest: data.weekly_digest,
-        theme: data.theme,
+        theme: data.theme as "light" | "dark" | "auto",
         timezone: data.timezone,
         language: data.language,
-        defaultExportFormat: data.default_export_format
+        defaultExportFormat: data.default_export_format as "csv" | "excel" | "pdf"
       };
 
       return { data: updatedSettings, error: null };

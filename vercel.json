@@ -1,23 +1,25 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
   "framework": "nextjs",
-  "redirects": [
-    {
-      "source": "/old-path",
-      "destination": "/new-path",
-      "permanent": true
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_PUBLIC_APP_NAME": "Opportunity Finder",
+    "NEXT_PUBLIC_APP_URL": "@app_url"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
     }
-  ],
+  },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        }
+        { "key": "Cache-Control", "value": "s-maxage=0" }
       ]
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  ]
 }

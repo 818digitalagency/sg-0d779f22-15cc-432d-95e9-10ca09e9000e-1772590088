@@ -4,7 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: "admin" | "sales_user" | "viewer";
-  avatar?: string;
+  avatarUrl?: string;
   phone?: string;
   company?: string;
   timezone: string;
@@ -35,34 +35,31 @@ export interface User {
 }
 
 export interface UserSettings {
-  notifications: {
-    email: boolean;
-    browser: boolean;
-    slack: boolean;
-    newLeads: boolean;
-    campaignUpdates: boolean;
-    weeklyReports: boolean;
-    systemAlerts: boolean;
-  };
-  privacy: {
-    profileVisibility: "public" | "team" | "private";
-    showEmail: boolean;
-    showPhone: boolean;
-    activityTracking: boolean;
-  };
-  integrations: {
-    googleCalendar: boolean;
-    slack: boolean;
-    zapier: boolean;
-    hubspot: boolean;
-  };
+  userId: string;
+  emailNotifications: boolean;
+  smsNotifications?: boolean;
+  pushNotifications: boolean;
+  marketingEmails: boolean;
+  activityAlerts: boolean;
+  weeklyDigest: boolean;
+  digestFrequency?: string;
+  theme: "light" | "dark" | "auto";
+  timezone: string;
+  language: string;
+  defaultExportFormat: "csv" | "excel" | "pdf";
+  apiKey?: string;
+  apiEnabled?: boolean;
+  apiRateLimit?: number;
+  twoFactorEnabled?: boolean;
 }
 
 export interface ActivityLog {
   id: string;
   userId: string;
   action: string;
-  description: string;
+  resource: string;
+  resourceId?: string;
+  details?: string;
   metadata?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;

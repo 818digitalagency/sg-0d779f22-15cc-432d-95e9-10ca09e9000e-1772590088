@@ -8,12 +8,11 @@ export interface Lead {
   city: string;
   postalCode: string;
   website?: string;
-  description?: string;
+  businessDescription?: string;
   category: string;
   industry?: string;
   businessAge?: number;
   estimatedAge?: number;
-  googleRating?: number;
   rating?: number;
   reviewCount?: number;
   socialMedia?: {
@@ -24,7 +23,7 @@ export interface Lead {
   };
   dataSource: string;
   leadScore: number;
-  websiteQuality?: number;
+  websiteQualityScore?: number;
   status: EngagementStatus;
   engagementStatus: EngagementStatus;
   tags: string[];

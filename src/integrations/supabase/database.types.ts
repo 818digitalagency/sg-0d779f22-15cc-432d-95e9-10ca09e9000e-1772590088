@@ -19,36 +19,36 @@ export type Database = {
         Row: {
           action: string
           created_at: string | null
-          description: string | null
-          entity_id: string | null
-          entity_type: string
+          details: string | null
           id: string
           ip_address: string | null
           metadata: Json | null
+          resource: string
+          resource_id: string | null
           user_agent: string | null
           user_id: string
         }
         Insert: {
           action: string
           created_at?: string | null
-          description?: string | null
-          entity_id?: string | null
-          entity_type: string
+          details?: string | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          resource: string
+          resource_id?: string | null
           user_agent?: string | null
           user_id: string
         }
         Update: {
           action?: string
           created_at?: string | null
-          description?: string | null
-          entity_id?: string | null
-          entity_type?: string
+          details?: string | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          resource?: string
+          resource_id?: string | null
           user_agent?: string | null
           user_id?: string
         }
@@ -57,6 +57,7 @@ export type Database = {
       campaigns: {
         Row: {
           created_at: string | null
+          description: string | null
           emails_bounced: number | null
           emails_clicked: number | null
           emails_delivered: number | null
@@ -76,6 +77,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           emails_bounced?: number | null
           emails_clicked?: number | null
           emails_delivered?: number | null
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           emails_bounced?: number | null
           emails_clicked?: number | null
           emails_delivered?: number | null

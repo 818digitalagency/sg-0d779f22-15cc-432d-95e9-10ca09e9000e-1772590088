@@ -20,6 +20,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Search, 
   Filter, 
@@ -31,11 +38,15 @@ import {
   Phone,
   Globe,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  Target
 } from "lucide-react";
 import { useState } from "react";
 import type { Lead, EngagementStatus } from "@/types/lead";
 import { CATEGORIES, NB_CITIES } from "@/types/lead";
+import { ProposalGenerator } from "@/components/ai/ProposalGenerator";
+import { LeadScoreCard } from "@/components/ai/LeadScoreCard";
 
 const MOCK_LEADS: Lead[] = [
   {
@@ -175,6 +186,9 @@ export default function LeadsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [showProposalDialog, setShowProposalDialog] = useState(false);
+  const [showScoreDialog, setShowScoreDialog] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const itemsPerPage = 10;
 
   const filteredLeads = MOCK_LEADS.filter(lead => {
@@ -231,6 +245,16 @@ export default function LeadsPage() {
     if (score >= 85) return "text-green-600 bg-green-50";
     if (score >= 70) return "text-amber-600 bg-amber-50";
     return "text-slate-600 bg-slate-50";
+  };
+
+  const handleGenerateProposal = (lead: Lead) => {
+    setSelectedLead(lead);
+    setShowProposalDialog(true);
+  };
+
+  const handleViewScore = (lead: Lead) => {
+    setSelectedLead(lead);
+    setShowScoreDialog(true);
   };
 
   return (
@@ -417,6 +441,24 @@ export default function LeadsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-8 px-2 gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                              onClick={() => handleViewScore(lead)}
+                            >
+                              <Target className="w-3 h-3" />
+                              <span className="text-xs">Score</span>
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-8 px-2 gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => handleGenerateProposal(lead)}
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              <span className="text-xs">AI</span>
+                            </Button>
                             {lead.website && (
                               <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                                 <Globe className="w-4 h-4" />
@@ -424,9 +466,6 @@ export default function LeadsPage() {
                             )}
                             <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                               <Mail className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                              <ExternalLink className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -466,6 +505,38 @@ export default function LeadsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Proposal Generator Dialog */}
+        <Dialog open={showProposalDialog} onOpenChange={setShowProposalDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                AI Proposal Generator
+              </DialogTitle>
+              <DialogDescription>
+                Generate a personalized business proposal for {selectedLead?.businessName}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedLead && <ProposalGenerator lead={selectedLead} />}
+          </DialogContent>
+        </Dialog>
+
+        {/* Lead Score Analysis Dialog */}
+        <Dialog open={showScoreDialog} onOpenChange={setShowScoreDialog}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-blue-600" />
+                Lead Intelligence Analysis
+              </DialogTitle>
+              <DialogDescription>
+                AI-powered scoring and insights for {selectedLead?.businessName}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedLead && <LeadScoreCard lead={selectedLead} />}
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
     </>
   );

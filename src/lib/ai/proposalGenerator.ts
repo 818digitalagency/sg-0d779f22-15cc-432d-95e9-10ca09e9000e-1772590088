@@ -518,13 +518,18 @@ P.S. Book a call directly: [Calendar Link]`;
       const tone = tones[i % tones.length];
       const length = lengths[i % lengths.length];
       
-      variations.push(
-        this.generateProposal({
+      const result = this.generateProposal({
           ...params,
           tone,
           length
-        })
-      );
+        });
+        
+      variations.push({
+        content: result.fullText,
+        suggestedSubject: result.subject,
+        estimatedReadTime: result.estimatedReadTime,
+        personalizationScore: result.personalizationScore
+      });
     }
 
     return variations;

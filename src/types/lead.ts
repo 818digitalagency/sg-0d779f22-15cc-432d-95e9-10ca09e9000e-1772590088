@@ -10,9 +10,11 @@ export interface Lead {
   website?: string;
   description?: string;
   category: string;
+  industry?: string;
   businessAge?: number;
   estimatedAge?: number;
   googleRating?: number;
+  rating?: number;
   reviewCount?: number;
   socialMedia?: {
     facebook?: string;

@@ -135,6 +135,56 @@ export type Database = {
         }
         Relationships: []
       }
+      email_events: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          email_id: string | null
+          email_table_id: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          timestamp: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          email_id?: string | null
+          email_table_id?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          timestamp?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          email_id?: string | null
+          email_table_id?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          timestamp?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_email_table_id_fkey"
+            columns: ["email_table_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emails: {
         Row: {
           body_html: string | null
@@ -149,9 +199,11 @@ export type Database = {
           from_email: string
           id: string
           lead_id: string | null
+          message_id: string | null
           metadata: Json | null
           open_count: number | null
           opened_at: string | null
+          provider: string
           scheduled_at: string | null
           sent_at: string | null
           status: string
@@ -174,9 +226,11 @@ export type Database = {
           from_email: string
           id?: string
           lead_id?: string | null
+          message_id?: string | null
           metadata?: Json | null
           open_count?: number | null
           opened_at?: string | null
+          provider?: string
           scheduled_at?: string | null
           sent_at?: string | null
           status?: string
@@ -199,9 +253,11 @@ export type Database = {
           from_email?: string
           id?: string
           lead_id?: string | null
+          message_id?: string | null
           metadata?: Json | null
           open_count?: number | null
           opened_at?: string | null
+          provider?: string
           scheduled_at?: string | null
           sent_at?: string | null
           status?: string

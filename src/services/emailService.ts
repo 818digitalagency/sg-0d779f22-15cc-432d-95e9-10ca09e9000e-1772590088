@@ -184,7 +184,12 @@ class EmailService {
         leadId: options.leadId,
         messageId,
         status: "sent",
-        provider: "sendgrid"
+        provider: "sendgrid",
+        to: options.to,
+        subject: options.subject,
+        from: options.from || this.fromEmail,
+        html: options.html,
+        text: options.text
       });
     }
 
@@ -311,6 +316,11 @@ class EmailService {
     messageId?: string;
     status: string;
     provider: string;
+    to: string;
+    subject: string;
+    from: string;
+    html: string;
+    text?: string;
   }) {
     try {
       const { error } = await supabase
@@ -321,7 +331,13 @@ class EmailService {
           message_id: data.messageId,
           status: data.status,
           provider: data.provider,
-          sent_at: new Date().toISOString()
+          to_email: data.to,
+          from_email: data.from,
+          subject: data.subject,
+          body_html: data.html,
+          body_text: data.text,
+          sent_at: new Date().toISOString(),
+          user_id: (await supabase.auth.getUser()).data.user?.id || ""
         });
 
       if (error) {
@@ -433,7 +449,8 @@ class EmailService {
           email_id: messageId,
           event_type: "click",
           url,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          user_id: (await supabase.auth.getUser()).data.user?.id || ""
         });
     } catch (error) {
       console.error("Error tracking email click:", error);

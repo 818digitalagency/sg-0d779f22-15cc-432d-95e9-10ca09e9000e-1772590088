@@ -210,7 +210,7 @@ class GoogleMapsService {
   /**
    * Get marker icon based on lead score
    */
-  private getMarkerIcon(score: number): google.maps.Icon {
+  private getMarkerIcon(score: number): google.maps.Symbol {
     let color = "#94a3b8"; // Default gray
     
     if (score >= 80) {
@@ -358,7 +358,7 @@ class GoogleMapsService {
         {
           location,
           radius,
-          type: types
+          type: types[0] // nearbySearch expects 'type' (string) or 'keyword' (string), or 'name' (string). 'types' (array) is deprecated/not in standard typedefs sometimes, but let's check. Actually standard typedef usually has type: string. Let's just use keyword or type.
         },
         (results, status) => {
           if (status === google.maps.places.PlacesServiceStatus.OK && results) {

@@ -1,0 +1,7 @@
+-- Add metric columns to campaigns table for real-time dashboard
+ALTER TABLE campaigns 
+ADD COLUMN IF NOT EXISTS recipients INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS sent_count INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS opened_count INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS clicked_count INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS replied_count INTEGER DEFAULT 0;

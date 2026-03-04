@@ -5,33 +5,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import type { Campaign, CampaignStatus } from "@/types/lead";
 
 type CampaignRow = Database["public"]["Tables"]["campaigns"]["Row"];
 type CampaignInsert = Database["public"]["Tables"]["campaigns"]["Insert"];
 type CampaignUpdate = Database["public"]["Tables"]["campaigns"]["Update"];
 
-export interface Campaign {
-  id: string;
-  userId: string;
-  name: string;
-  description?: string;
-  status: "draft" | "scheduled" | "active" | "paused" | "completed";
-  emailsSent: number;
-  emailsOpened: number;
-  emailsClicked: number;
-  emailsReplied: number;
-  emailsBounced: number;
-  conversionRate: number;
-  scheduledAt?: string;
-  startedAt?: string;
-  completedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export class CampaignService {
   /**
-   * Get all campaigns for the current user
+   * Fetch all campaigns
    */
   async getCampaigns(): Promise<{ data: Campaign[] | null; error: any }> {
     try {
@@ -45,7 +27,7 @@ export class CampaignService {
         return { data: null, error };
       }
 
-      const campaigns: Campaign[] = (data || []).map(this.transformCampaignRow);
+      const campaigns = (data || []).map(this.transformCampaignRow);
       return { data: campaigns, error: null };
     } catch (error) {
       console.error("Exception in getCampaigns:", error);
@@ -54,7 +36,7 @@ export class CampaignService {
   }
 
   /**
-   * Get a single campaign by ID
+   * Get campaign by ID
    */
   async getCampaign(id: string): Promise<{ data: Campaign | null; error: any }> {
     try {
@@ -90,18 +72,17 @@ export class CampaignService {
       const campaignInsert: CampaignInsert = {
         user_id: user.id,
         name: campaign.name || "Untitled Campaign",
+        subject: campaign.subject || "",
         description: campaign.description,
-        subject: campaign.name || "Untitled Campaign",
-        status: campaign.status || "draft",
-        emails_sent: campaign.emailsSent || 0,
-        emails_opened: campaign.emailsOpened || 0,
-        emails_clicked: campaign.emailsClicked || 0,
-        emails_replied: campaign.emailsReplied || 0,
-        emails_bounced: campaign.emailsBounced || 0,
-        emails_delivered: campaign.emailsSent || 0,
+        status: (campaign.status as CampaignStatus) || "draft",
         conversion_rate: campaign.conversionRate || 0,
         scheduled_at: campaign.scheduledAt,
-        total_recipients: 0
+        sent_at: campaign.sentAt,
+        recipients: campaign.recipients || 0,
+        sent_count: campaign.sent || 0,
+        opened_count: campaign.opened || 0,
+        clicked_count: campaign.clicked || 0,
+        replied_count: campaign.replied || 0
       };
 
       const { data, error } = await supabase
@@ -129,22 +110,23 @@ export class CampaignService {
     try {
       const campaignUpdate: CampaignUpdate = {
         name: updates.name,
+        subject: updates.subject,
         description: updates.description,
-        status: updates.status,
-        emails_sent: updates.emailsSent,
-        emails_opened: updates.emailsOpened,
-        emails_clicked: updates.emailsClicked,
-        emails_replied: updates.emailsReplied,
-        emails_bounced: updates.emailsBounced,
-        emails_delivered: updates.emailsSent,
+        status: updates.status as CampaignStatus,
         conversion_rate: updates.conversionRate,
         scheduled_at: updates.scheduledAt,
-        total_recipients: 0
+        sent_at: updates.sentAt,
+        recipients: updates.recipients,
+        sent_count: updates.sent,
+        opened_count: updates.opened,
+        clicked_count: updates.clicked,
+        replied_count: updates.replied,
+        updated_at: new Date().toISOString()
       };
 
-      // Remove undefined values
+      // Remove undefined keys
       Object.keys(campaignUpdate).forEach(key => 
-        campaignUpdate[key as keyof CampaignUpdate] === undefined && delete campaignUpdate[key as keyof CampaignUpdate]
+        (campaignUpdate as any)[key] === undefined && delete (campaignUpdate as any)[key]
       );
 
       const { data, error } = await supabase
@@ -205,7 +187,7 @@ export class CampaignService {
     try {
       const { data: campaigns, error } = await supabase
         .from("campaigns")
-        .select("status, emails_sent, emails_opened, emails_clicked, conversion_rate");
+        .select("status, sent_count, opened_count, clicked_count, conversion_rate");
 
       if (error) {
         console.error("Error fetching campaign stats:", error);
@@ -214,10 +196,10 @@ export class CampaignService {
 
       const totalCampaigns = campaigns?.length || 0;
       const activeCampaigns = campaigns?.filter(c => c.status === "active").length || 0;
-      const totalSent = campaigns?.reduce((sum, c) => sum + (c.emails_sent || 0), 0) || 0;
-      const totalOpened = campaigns?.reduce((sum, c) => sum + (c.emails_opened || 0), 0) || 0;
-      const totalClicked = campaigns?.reduce((sum, c) => sum + (c.emails_clicked || 0), 0) || 0;
-      const totalConversion = campaigns?.reduce((sum, c) => sum + (c.conversion_rate || 0), 0) || 0;
+      const totalSent = campaigns?.reduce((sum, c) => sum + (c.sent_count || 0), 0) || 0;
+      const totalOpened = campaigns?.reduce((sum, c) => sum + (c.opened_count || 0), 0) || 0;
+      const totalClicked = campaigns?.reduce((sum, c) => sum + (c.clicked_count || 0), 0) || 0;
+      const totalConversion = campaigns?.reduce((sum, c) => sum + (Number(c.conversion_rate) || 0), 0) || 0;
 
       return {
         data: {
@@ -242,19 +224,18 @@ export class CampaignService {
   private transformCampaignRow(row: CampaignRow): Campaign {
     return {
       id: row.id,
-      userId: row.user_id,
       name: row.name,
+      subject: row.subject || "",
       description: row.description || undefined,
-      status: row.status as "draft" | "scheduled" | "active" | "paused" | "completed",
-      emailsSent: row.emails_sent,
-      emailsOpened: row.emails_opened,
-      emailsClicked: row.emails_clicked,
-      emailsReplied: row.emails_replied,
-      emailsBounced: row.emails_bounced,
-      conversionRate: row.conversion_rate,
+      status: (row.status as CampaignStatus) || "draft",
+      recipients: row.recipients || 0,
+      sent: row.sent_count || 0,
+      opened: row.opened_count || 0,
+      clicked: row.clicked_count || 0,
+      replied: row.replied_count || 0,
+      conversionRate: Number(row.conversion_rate) || 0,
       scheduledAt: row.scheduled_at || undefined,
-      startedAt: undefined,
-      completedAt: undefined,
+      sentAt: row.sent_at || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };

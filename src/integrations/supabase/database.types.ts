@@ -56,6 +56,7 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          clicked_count: number | null
           conversion_rate: number | null
           created_at: string | null
           description: string | null
@@ -67,8 +68,12 @@ export type Database = {
           emails_sent: number | null
           id: string
           name: string
+          opened_count: number | null
+          recipients: number | null
+          replied_count: number | null
           scheduled_at: string | null
           sent_at: string | null
+          sent_count: number | null
           status: string
           subject: string
           template_id: string | null
@@ -77,6 +82,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          clicked_count?: number | null
           conversion_rate?: number | null
           created_at?: string | null
           description?: string | null
@@ -88,8 +94,12 @@ export type Database = {
           emails_sent?: number | null
           id?: string
           name: string
+          opened_count?: number | null
+          recipients?: number | null
+          replied_count?: number | null
           scheduled_at?: string | null
           sent_at?: string | null
+          sent_count?: number | null
           status?: string
           subject: string
           template_id?: string | null
@@ -98,6 +108,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          clicked_count?: number | null
           conversion_rate?: number | null
           created_at?: string | null
           description?: string | null
@@ -109,8 +120,12 @@ export type Database = {
           emails_sent?: number | null
           id?: string
           name?: string
+          opened_count?: number | null
+          recipients?: number | null
+          replied_count?: number | null
           scheduled_at?: string | null
           sent_at?: string | null
+          sent_count?: number | null
           status?: string
           subject?: string
           template_id?: string | null

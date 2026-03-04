@@ -17,85 +17,128 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-
-interface Campaign {
-  id: string;
-  name: string;
-  subject: string;
-  status: "Draft" | "Scheduled" | "Active" | "Paused" | "Completed";
-  recipients: number;
-  sent: number;
-  opened: number;
-  clicked: number;
-  replied: number;
-  scheduledDate?: string;
-  createdAt: string;
-}
+import type { Campaign } from "@/types/lead";
+import { useRealtimeCampaigns } from "@/hooks/useRealtimeCampaigns";
+import { campaignService } from "@/services/campaignService";
+import { useEffect } from "react";
 
 const MOCK_CAMPAIGNS: Campaign[] = [
   {
     id: "1",
     name: "Q1 Tech Outreach",
     subject: "Transform Your Business with Modern Technology",
-    status: "Active",
+    status: "active",
     recipients: 245,
     sent: 245,
     opened: 167,
     clicked: 89,
     replied: 23,
-    createdAt: "2026-02-15T10:00:00Z"
+    conversionRate: 15.5,
+    createdAt: "2026-02-15T10:00:00Z",
+    updatedAt: "2026-02-15T10:00:00Z"
   },
   {
     id: "2",
     name: "Legal Services Campaign",
     subject: "Upgrade Your Legal Practice Website",
-    status: "Completed",
+    status: "completed",
     recipients: 128,
     sent: 128,
     opened: 94,
     clicked: 52,
     replied: 18,
-    createdAt: "2026-01-20T14:00:00Z"
+    conversionRate: 12.3,
+    createdAt: "2026-01-20T14:00:00Z",
+    updatedAt: "2026-01-20T14:00:00Z"
   },
   {
     id: "3",
     name: "Healthcare Provider Outreach",
     subject: "Modern Patient Engagement Solutions",
-    status: "Scheduled",
+    status: "scheduled",
     recipients: 186,
     sent: 0,
     opened: 0,
     clicked: 0,
     replied: 0,
-    scheduledDate: "2026-03-10T09:00:00Z",
-    createdAt: "2026-03-01T11:30:00Z"
+    conversionRate: 0,
+    scheduledAt: "2026-03-10T09:00:00Z",
+    createdAt: "2026-03-01T11:30:00Z",
+    updatedAt: "2026-03-01T11:30:00Z"
   },
   {
     id: "4",
     name: "Real Estate Follow-up",
     subject: "Enhance Your Property Listings Online",
-    status: "Paused",
+    status: "paused",
     recipients: 92,
     sent: 45,
     opened: 31,
     clicked: 14,
     replied: 5,
-    createdAt: "2026-02-25T08:00:00Z"
+    conversionRate: 8.2,
+    createdAt: "2026-02-25T08:00:00Z",
+    updatedAt: "2026-02-25T08:00:00Z"
   }
 ];
 
 export default function CampaignsPage() {
-  const [campaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]); // Start empty, fetch real data
+
+  // Fetch initial data
+  useEffect(() => {
+    async function fetchCampaigns() {
+      try {
+        const { data, error } = await campaignService.getCampaigns();
+        if (error) {
+          console.error("Error fetching campaigns:", error);
+          // Fallback to mock data if DB is empty or error
+          if (MOCK_CAMPAIGNS.length > 0) setCampaigns(MOCK_CAMPAIGNS);
+        } else if (data && data.length > 0) {
+          setCampaigns(data);
+        } else {
+          setCampaigns(MOCK_CAMPAIGNS); // Fallback for demo if no real data
+        }
+      } catch (err) {
+        console.error("Failed to fetch campaigns:", err);
+        setCampaigns(MOCK_CAMPAIGNS);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCampaigns();
+  }, []);
+
+  // Real-time subscription
+  useRealtimeCampaigns({
+    enabled: true,
+    onInsert: (newCampaign) => {
+      console.log("New campaign created:", newCampaign);
+      setCampaigns(prev => [newCampaign, ...prev]);
+    },
+    onUpdate: (updatedCampaign) => {
+      console.log("Campaign updated:", updatedCampaign);
+      setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c));
+    },
+    onDelete: (deletedId) => {
+      console.log("Campaign deleted:", deletedId);
+      setCampaigns(prev => prev.filter(c => c.id !== deletedId));
+    }
+  });
 
   const getStatusColor = (status: Campaign["status"]) => {
     const colors = {
-      "Draft": "bg-slate-100 text-slate-700",
-      "Scheduled": "bg-blue-100 text-blue-700",
-      "Active": "bg-green-100 text-green-700",
-      "Paused": "bg-amber-100 text-amber-700",
-      "Completed": "bg-purple-100 text-purple-700"
+      "draft": "bg-slate-100 text-slate-700",
+      "scheduled": "bg-blue-100 text-blue-700",
+      "active": "bg-green-100 text-green-700",
+      "paused": "bg-amber-100 text-amber-700",
+      "completed": "bg-purple-100 text-purple-700",
+      "cancelled": "bg-red-100 text-red-700"
     };
-    return colors[status];
+    return colors[status] || colors["draft"];
   };
 
   const calculateOpenRate = (opened: number, sent: number) => {
@@ -190,21 +233,21 @@ export default function CampaignsPage() {
                       <p className="text-sm text-slate-600 mb-1">
                         <span className="font-medium">Subject:</span> {campaign.subject}
                       </p>
-                      {campaign.scheduledDate && (
+                      {campaign.scheduledAt && (
                         <div className="flex items-center gap-1 text-sm text-slate-600">
                           <Clock className="w-3 h-3" />
-                          Scheduled for {new Date(campaign.scheduledDate).toLocaleString()}
+                          Scheduled for {new Date(campaign.scheduledAt).toLocaleString()}
                         </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {campaign.status === "Active" && (
+                      {campaign.status === "active" && (
                         <Button variant="outline" size="sm">
                           <Pause className="w-3 h-3 mr-1" />
                           Pause
                         </Button>
                       )}
-                      {campaign.status === "Paused" && (
+                      {campaign.status === "paused" && (
                         <Button variant="outline" size="sm">
                           <Play className="w-3 h-3 mr-1" />
                           Resume

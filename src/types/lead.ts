@@ -86,3 +86,23 @@ export const NB_CITIES = [
   "Grand Bay-Westfield",
   "Sackville"
 ];
+
+export type CampaignStatus = "draft" | "scheduled" | "active" | "paused" | "completed" | "cancelled";
+
+export interface Campaign {
+  id: string;
+  name: string;
+  subject: string;
+  description?: string;
+  status: CampaignStatus;
+  recipients: number;
+  sent: number;
+  opened: number;
+  clicked: number;
+  replied: number;
+  conversionRate: number;
+  scheduledAt?: string;
+  sentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}

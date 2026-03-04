@@ -45,7 +45,7 @@ import {
   FileText,
   CheckCircle2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Lead, EngagementStatus } from "@/types/lead";
 import { CATEGORIES, NB_CITIES } from "@/types/lead";
 import { ProposalGenerator } from "@/components/ai/ProposalGenerator";
@@ -54,6 +54,10 @@ import { dataExporter, type ExportOptions } from "@/lib/utils/exportData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { aiProposalGenerator } from "@/lib/ai/proposalGenerator";
+import { aiLeadScorer } from "@/lib/ai/leadScoring";
+import { useRealtimeLeads } from "@/hooks/useRealtimeLeads";
+import { leadService } from "@/services/leadService";
 
 const MOCK_LEADS: Lead[] = [
   {
@@ -209,9 +213,54 @@ export default function LeadsPage() {
     "leadScore",
     "status"
   ]);
+  
+  const [loading, setLoading] = useState(true);
+  // Initialize leads state with empty array to fetch real data
+  const [leads, setLeads] = useState<Lead[]>([]);
+  
+  // Fetch initial data
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const { data, error } = await leadService.getLeads();
+        if (error) {
+          console.error("Error fetching leads:", error);
+          setLeads(MOCK_LEADS); // Fallback
+        } else if (data && data.length > 0) {
+          setLeads(data);
+        } else {
+          setLeads(MOCK_LEADS); // Fallback
+        }
+      } catch (err) {
+        console.error("Failed to fetch leads:", err);
+        setLeads(MOCK_LEADS);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLeads();
+  }, []);
+  
+  // Real-time subscription
+  useRealtimeLeads({
+    enabled: true,
+    onInsert: (newLead) => {
+      setLeads(prev => [newLead, ...prev]);
+    },
+    onUpdate: (updatedLead) => {
+      setLeads(prev => prev.map(lead => 
+        lead.id === updatedLead.id ? updatedLead : lead
+      ));
+    },
+    onDelete: (deletedId) => {
+      setLeads(prev => prev.filter(lead => lead.id !== deletedId));
+    }
+  });
+
   const itemsPerPage = 10;
 
-  const filteredLeads = MOCK_LEADS.filter(lead => {
+  const filteredLeads = leads.filter(lead => {
     const matchesSearch = searchQuery === "" || 
       lead.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -281,7 +330,7 @@ export default function LeadsPage() {
     setExportComplete(false);
     
     const leadsToExport = selectedLeads.size > 0 
-      ? MOCK_LEADS.filter(l => selectedLeads.has(l.id))
+      ? leads.filter(l => selectedLeads.has(l.id))
       : filteredLeads;
 
     const options: ExportOptions = {

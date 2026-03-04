@@ -5,8 +5,10 @@
 
 import type { Lead } from "@/types/lead";
 
+export type ExportFormat = "csv" | "excel" | "pdf";
+
 export interface ExportOptions {
-  format: "csv" | "excel" | "pdf";
+  format: ExportFormat;
   fields?: string[];
   filename?: string;
   includeHeaders?: boolean;
@@ -459,3 +461,18 @@ export class DataExporter {
 
 // Export singleton instance
 export const dataExporter = new DataExporter();
+
+// Convenience export service with simplified API
+export const exportService = {
+  async exportLeads(
+    leads: Lead[],
+    options: ExportOptions,
+    onProgress?: (progress: number) => void
+  ): Promise<ExportResult> {
+    return dataExporter.exportWithProgress(leads, options, onProgress);
+  },
+
+  getExportStats(leads: Lead[]) {
+    return dataExporter.getExportStats(leads);
+  }
+};

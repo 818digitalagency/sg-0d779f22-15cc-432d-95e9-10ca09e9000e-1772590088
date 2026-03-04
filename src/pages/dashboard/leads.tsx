@@ -1,252 +1,170 @@
+import { useState, useMemo, useEffect } from "react";
 import { SEO } from "@/components/SEO";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { 
-  Search, 
-  Filter, 
-  Download, 
-  Mail, 
-  MapPin, 
-  Star,
-  ExternalLink,
-  Phone,
-  Globe,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Target,
-  FileSpreadsheet,
-  FileText,
-  CheckCircle2
+  Search, Filter, Download, Mail, MapPin, Phone, Globe, 
+  Star, Calendar, TrendingUp, ChevronLeft, ChevronRight,
+  RefreshCw, AlertCircle, CheckCircle2, XCircle
 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { NB_CITIES, BUSINESS_CATEGORIES } from "@/types/lead";
 import type { Lead, EngagementStatus } from "@/types/lead";
-import { CATEGORIES, NB_CITIES } from "@/types/lead";
 import { ProposalGenerator } from "@/components/ai/ProposalGenerator";
 import { LeadScoreCard } from "@/components/ai/LeadScoreCard";
-import { dataExporter, type ExportOptions } from "@/lib/utils/exportData";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import { exportService, type ExportFormat, type ExportOptions } from "@/lib/utils/exportData";
 import { aiProposalGenerator } from "@/lib/ai/proposalGenerator";
 import { aiLeadScorer } from "@/lib/ai/leadScoring";
 import { useRealtimeLeads } from "@/hooks/useRealtimeLeads";
 import { leadService } from "@/services/leadService";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MOCK_LEADS: Lead[] = [
   {
     id: "1",
     businessName: "Maritime Tech Solutions",
-    contactName: "John Smith",
-    email: "john@maritimetech.ca",
-    phone: "(506) 555-0123",
-    address: "123 Main St",
-    city: "Moncton",
-    postalCode: "E1C 1A1",
-    category: "IT & Technology",
-    industry: "IT Services",
-    businessAge: 8,
-    rating: 4.5,
-    reviewCount: 42,
-    website: "https://maritimetech.ca",
-    businessDescription: "Full-service IT consulting and managed services",
-    dataSource: "Google Business",
-    leadScore: 85,
-    websiteQualityScore: 72,
-    status: "Not Contacted",
-    engagementStatus: "Not Contacted",
-    tags: ["tech", "priority"],
-    lastContactDate: "2026-02-20T14:00:00Z",
-    createdAt: "2026-02-18T10:00:00Z",
-    updatedAt: "2026-02-25T14:00:00Z"
-  },
-  {
-    id: "2",
-    businessName: "Atlantic Accounting Services",
     contactName: "Sarah Johnson",
-    email: "sarah@atlanticaccounting.ca",
-    phone: "(506) 555-0124",
-    address: "456 King St",
-    city: "Saint John",
-    postalCode: "E2L 2B2",
-    category: "Accounting",
-    industry: "Professional Services",
-    businessAge: 15,
-    rating: 4.8,
-    reviewCount: 67,
-    website: "https://atlanticaccounting.ca",
-    businessDescription: "Comprehensive accounting and tax services",
-    dataSource: "LinkedIn",
-    leadScore: 92,
-    websiteQualityScore: 45,
-    status: "Not Contacted",
-    engagementStatus: "Not Contacted",
-    tags: ["accounting", "established"],
-    lastContactDate: "2026-02-22T10:00:00Z",
-    createdAt: "2026-02-19T11:00:00Z",
-    updatedAt: "2026-02-26T10:00:00Z"
-  },
-  {
-    id: "3",
-    businessName: "Coastal Real Estate Group",
-    contactName: "Michael Brown",
-    email: "michael@coastalrealestate.ca",
-    phone: "(506) 555-0125",
-    address: "789 Queen St",
-    city: "Fredericton",
-    postalCode: "E3B 3C3",
-    category: "Real Estate",
-    industry: "Real Estate",
-    businessAge: 5,
-    rating: 4.3,
-    reviewCount: 28,
-    website: "https://coastalrealestate.ca",
-    businessDescription: "Residential and commercial real estate",
-    dataSource: "Google Business",
-    leadScore: 78,
-    websiteQualityScore: 88,
-    status: "Not Contacted",
-    engagementStatus: "Not Contacted",
-    tags: ["real-estate", "growing"],
-    lastContactDate: "2026-02-24T16:00:00Z",
-    createdAt: "2026-02-20T09:00:00Z",
-    updatedAt: "2026-02-27T16:00:00Z"
-  },
-  {
-    id: "4",
-    businessName: "NB Legal Partners",
-    email: "contact@nblegal.ca",
-    phone: "(506) 555-0126",
-    address: "321 Brunswick St",
+    email: "sarah@maritimetech.ca",
+    phone: "(506) 555-0123",
+    address: "123 Main Street",
     city: "Moncton",
-    postalCode: "E1C 4D4",
-    category: "Law Firm",
-    industry: "Legal Services",
-    businessAge: 12,
-    rating: 4.6,
-    reviewCount: 51,
-    website: "https://nblegal.ca",
-    businessDescription: "Full-service law firm specializing in business law",
-    dataSource: "Manual Entry",
-    leadScore: 88,
-    websiteQualityScore: 65,
-    status: "Not Contacted",
-    engagementStatus: "Not Contacted",
-    tags: ["legal", "b2b"],
-    lastContactDate: "2026-02-23T12:00:00Z",
-    createdAt: "2026-02-21T13:00:00Z",
-    updatedAt: "2026-02-28T12:00:00Z"
-  },
-  {
-    id: "5",
-    businessName: "Harbor Manufacturing Ltd",
-    contactName: "David Wilson",
-    email: "david@harbormanufacturing.ca",
-    phone: "(506) 555-0127",
-    address: "555 Industrial Pkwy",
-    city: "Saint John",
-    postalCode: "E2M 5E5",
-    category: "Manufacturing",
-    industry: "Manufacturing",
-    businessAge: 22,
-    rating: 4.1,
-    reviewCount: 19,
+    province: "New Brunswick",
+    postalCode: "E1C 1A1",
+    website: "https://maritimetech.ca",
+    businessDescription: "IT consulting and software development for maritime businesses",
+    category: "Information Technology",
+    businessAge: 5,
+    rating: 4.8,
+    reviewCount: 124,
+    socialMedia: {
+      linkedin: "https://linkedin.com/company/maritime-tech"
+    },
     dataSource: "Google Business",
-    leadScore: 71,
-    websiteQualityScore: 38,
-    status: "Not Contacted",
+    industry: "Technology",
+    leadScore: 92,
+    websiteQualityScore: 88,
     engagementStatus: "Not Contacted",
-    tags: ["manufacturing", "legacy"],
-    lastContactDate: "2026-02-21T14:00:00Z",
-    createdAt: "2026-02-18T10:00:00Z",
-    updatedAt: "2026-02-25T14:00:00Z"
+    status: "active",
+    tags: ["high-priority", "tech"],
+    createdAt: "2026-03-01T10:00:00Z",
+    updatedAt: "2026-03-01T10:00:00Z"
   }
 ];
 
 export default function LeadsPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [showProposalDialog, setShowProposalDialog] = useState(false);
-  const [showScoreDialog, setShowScoreDialog] = useState(false);
-  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
   const [exportProgress, setExportProgress] = useState(0);
   const [exportComplete, setExportComplete] = useState(false);
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
-  const [exportFields, setExportFields] = useState<string[]>([
-    "businessName",
-    "contactName",
-    "email",
-    "phone",
-    "city",
-    "industry",
-    "leadScore",
-    "status"
-  ]);
+  const [showProposalGenerator, setShowProposalGenerator] = useState(false);
+  const [showLeadScore, setShowLeadScore] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "score" | "rating" | "age">("score");
   
-  const [loading, setLoading] = useState(true);
-  // Initialize leads state with empty array to fetch real data
+  // Data state
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Fetch initial data
-  useEffect(() => {
-    async function fetchLeads() {
-      try {
-        const { data, error } = await leadService.getLeads();
-        if (error) {
-          console.error("Error fetching leads:", error);
-          setLeads(MOCK_LEADS); // Fallback
-        } else if (data && data.length > 0) {
-          setLeads(data);
-        } else {
-          setLeads(MOCK_LEADS); // Fallback
-        }
-      } catch (err) {
-        console.error("Failed to fetch leads:", err);
-        setLeads(MOCK_LEADS);
-      } finally {
-        setLoading(false);
+  // Fetch leads with retry logic
+  const fetchLeads = async (isRetry = false) => {
+    try {
+      if (!isRetry) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
       }
+      setError(null);
+      
+      const { data, error: fetchError } = await leadService.getLeads();
+      
+      if (fetchError) {
+        throw new Error(fetchError.message || "Failed to fetch leads");
+      }
+      
+      if (data && data.length > 0) {
+        setLeads(data);
+        toast({
+          title: "Leads loaded",
+          description: `Successfully loaded ${data.length} leads`,
+          duration: 3000,
+        });
+      } else {
+        // Use mock data if database is empty
+        setLeads(MOCK_LEADS);
+        toast({
+          title: "Using sample data",
+          description: "No leads in database. Showing sample data.",
+          duration: 3000,
+        });
+      }
+      setRetryCount(0);
+    } catch (err) {
+      console.error("Error fetching leads:", err);
+      setError(err instanceof Error ? err.message : "Failed to load leads");
+      
+      // Fallback to mock data on error
+      setLeads(MOCK_LEADS);
+      
+      // Auto-retry logic (max 3 attempts)
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchLeads(true);
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+        
+        toast({
+          title: "Connection issue",
+          description: `Retrying... (Attempt ${retryCount + 1}/3)`,
+          variant: "destructive",
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "Failed to load leads",
+          description: "Using cached data. Please check your connection.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
     }
+  };
 
+  // Initial data fetch
+  useEffect(() => {
     fetchLeads();
   }, []);
   
-  // Real-time subscription
+  // Real-time subscription with error handling
   useRealtimeLeads({
-    enabled: true,
+    enabled: !loading && !error,
     onInsert: (newLead) => {
       setLeads(prev => [newLead, ...prev]);
+      toast({
+        title: "New lead added",
+        description: newLead.businessName,
+        duration: 3000,
+      });
     },
     onUpdate: (updatedLead) => {
       setLeads(prev => prev.map(lead => 
@@ -255,15 +173,20 @@ export default function LeadsPage() {
     },
     onDelete: (deletedId) => {
       setLeads(prev => prev.filter(lead => lead.id !== deletedId));
+      toast({
+        title: "Lead removed",
+        description: "A lead was deleted",
+        duration: 3000,
+      });
     }
   });
 
   const itemsPerPage = 10;
 
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = searchQuery === "" || 
+    const matchesSearch = 
       lead.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.city.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = selectedCategory === "all" || lead.category === selectedCategory;
@@ -273,23 +196,82 @@ export default function LeadsPage() {
     return matchesSearch && matchesCategory && matchesCity && matchesStatus;
   });
 
-  const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
-  const paginatedLeads = filteredLeads.slice(
+  const sortedLeads = useMemo(() => {
+    return [...filteredLeads].sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.businessName.localeCompare(b.businessName);
+        case "score":
+          return (b.leadScore || 0) - (a.leadScore || 0);
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+        case "age":
+          return (b.businessAge || 0) - (a.businessAge || 0);
+        default:
+          return 0;
+      }
+    });
+  }, [filteredLeads, sortBy]);
+
+  const paginatedLeads = sortedLeads.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const toggleLeadSelection = (leadId: string) => {
-    const newSelected = new Set(selectedLeads);
-    if (newSelected.has(leadId)) {
-      newSelected.delete(leadId);
-    } else {
-      newSelected.add(leadId);
+  const totalPages = Math.ceil(sortedLeads.length / itemsPerPage);
+
+  const handleExport = async () => {
+    setExportProgress(0);
+    setExportComplete(false);
+
+    const dataToExport = selectedLeads.size > 0 
+      ? leads.filter(l => selectedLeads.has(l.id))
+      : filteredLeads;
+
+    const options: ExportOptions = {
+      format: exportFormat,
+      filename: `leads_export_${new Date().toISOString().split('T')[0]}`
+    };
+
+    try {
+      await exportService.exportLeads(dataToExport, options, (progress) => {
+        setExportProgress(progress);
+      });
+
+      setExportComplete(true);
+      toast({
+        title: "Export successful",
+        description: `Exported ${dataToExport.length} leads as ${exportFormat.toUpperCase()}`,
+        duration: 5000,
+      });
+
+      setTimeout(() => {
+        setExportDialogOpen(false);
+        setExportProgress(0);
+        setExportComplete(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Please try again",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
-    setSelectedLeads(newSelected);
   };
 
-  const toggleSelectAll = () => {
+  const toggleLeadSelection = (leadId: string) => {
+    const newSelection = new Set(selectedLeads);
+    if (newSelection.has(leadId)) {
+      newSelection.delete(leadId);
+    } else {
+      newSelection.add(leadId);
+    }
+    setSelectedLeads(newSelection);
+  };
+
+  const toggleAllLeads = () => {
     if (selectedLeads.size === paginatedLeads.length) {
       setSelectedLeads(new Set());
     } else {
@@ -297,146 +279,198 @@ export default function LeadsPage() {
     }
   };
 
+  const statusColors: Record<EngagementStatus, string> = {
+    "Not Contacted": "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    "Contacted": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    "Responded": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    "Qualified": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    "Converted": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    "Lost": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+  };
+
   const getStatusColor = (status: EngagementStatus) => {
     const colors: Record<EngagementStatus, string> = {
-      "Not Contacted": "bg-slate-100 text-slate-700",
+      "Not Contacted": "bg-gray-100 text-gray-700",
       "Contacted": "bg-blue-100 text-blue-700",
       "Responded": "bg-purple-100 text-purple-700",
-      "Qualified": "bg-amber-100 text-amber-700",
-      "Converted": "bg-emerald-100 text-emerald-700",
+      "Qualified": "bg-emerald-100 text-emerald-700",
+      "Converted": "bg-green-100 text-green-700",
       "Lost": "bg-red-100 text-red-700"
     };
     return colors[status];
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 85) return "text-green-600 bg-green-50";
-    if (score >= 70) return "text-amber-600 bg-amber-50";
-    return "text-slate-600 bg-slate-50";
-  };
-
-  const handleGenerateProposal = (lead: Lead) => {
-    setSelectedLead(lead);
-    setShowProposalDialog(true);
-  };
-
-  const handleViewScore = (lead: Lead) => {
-    setSelectedLead(lead);
-    setShowScoreDialog(true);
-  };
-
-  const handleExport = async () => {
-    setExportProgress(0);
-    setExportComplete(false);
-    
-    const leadsToExport = selectedLeads.size > 0 
-      ? leads.filter(l => selectedLeads.has(l.id))
-      : filteredLeads;
-
-    const options: ExportOptions = {
-      format: exportFormat,
-      fields: exportFields,
-      includeHeaders: true
-    };
-
-    const result = await dataExporter.exportWithProgress(
-      leadsToExport,
-      options,
-      (progress) => setExportProgress(progress)
-    );
-
-    if (result.success) {
-      setExportComplete(true);
-      setTimeout(() => {
-        setShowExportDialog(false);
-        setExportComplete(false);
-        setExportProgress(0);
-      }, 2000);
-    }
-  };
-
-  const toggleExportField = (field: string) => {
-    setExportFields(prev => 
-      prev.includes(field) 
-        ? prev.filter(f => f !== field)
-        : [...prev, field]
-    );
-  };
-
-  const availableFields = [
-    { value: "businessName", label: "Business Name" },
-    { value: "contactName", label: "Contact Name" },
-    { value: "email", label: "Email" },
-    { value: "phone", label: "Phone" },
-    { value: "website", label: "Website" },
-    { value: "address", label: "Address" },
-    { value: "city", label: "City" },
-    { value: "postalCode", label: "Postal Code" },
-    { value: "industry", label: "Industry" },
-    { value: "leadScore", label: "Lead Score" },
-    { value: "rating", label: "Rating" },
-    { value: "reviewCount", label: "Review Count" },
-    { value: "status", label: "Status" },
-    { value: "businessAge", label: "Business Age" }
-  ];
-
-  const statusColors: Record<EngagementStatus, string> = {
-    "Not Contacted": "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
-    "Contacted": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    "Responded": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    "Qualified": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    "Converted": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    "Lost": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-  };
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <>
-      <SEO title="Leads - Opportunity Finder" />
+      <SEO 
+        title="Lead Management - Opportunity Finder"
+        description="Discover and manage high-quality business leads in New Brunswick"
+      />
       <DashboardLayout>
         <div className="space-y-6">
-          {/* Header */}
+          {/* Header with connection status */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Leads Database</h1>
-              <p className="text-slate-600 mt-1">{filteredLeads.length} business opportunities</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                Lead Management
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1">
+                Discover and manage business opportunities
+              </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
+              {error && (
+                <Badge variant="destructive" className="flex items-center gap-2">
+                  <XCircle className="h-3 w-3" />
+                  Connection Error
+                </Badge>
+              )}
+              {!error && !loading && (
+                <Badge variant="outline" className="flex items-center gap-2 bg-green-50 text-green-700 border-green-200">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Live Data
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchLeads(true)}
+                disabled={isRefreshing}
                 className="gap-2"
-                onClick={() => setShowExportDialog(true)}
               >
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
-              <Button className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700">
-                <Mail className="w-4 h-4" />
-                Send Campaign
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
               </Button>
             </div>
           </div>
 
-          {/* Filters */}
-          <Card className="border-slate-200">
-            <CardContent className="p-6">
-              <div className="grid md:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    placeholder="Search leads..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+          {/* Error banner */}
+          {error && retryCount >= 3 && (
+            <Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-900 dark:text-red-100">
+                      Connection Issue
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                      {error}. Showing cached data. Check your internet connection or try again later.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setRetryCount(0);
+                        fetchLeads(true);
+                      }}
+                      className="mt-3"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stats Cards */}
+          <div className="grid md:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Total Leads
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {loading ? <Skeleton className="h-8 w-16" /> : leads.length.toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  High Priority
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {loading ? <Skeleton className="h-8 w-16" /> : leads.filter(l => (l.leadScore || 0) >= 80).length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Not Contacted
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                  {loading ? <Skeleton className="h-8 w-16" /> : leads.filter(l => l.engagementStatus === "Not Contacted").length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Avg Lead Score
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {loading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    Math.round(leads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / leads.length || 0)
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters and Actions */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid md:grid-cols-5 gap-4">
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search leads..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
 
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Categories" />
+                    <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map(cat => (
+                    {BUSINESS_CATEGORIES.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
@@ -444,7 +478,7 @@ export default function LeadsPage() {
 
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Cities" />
+                    <SelectValue placeholder="City" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Cities</SelectItem>
@@ -456,7 +490,7 @@ export default function LeadsPage() {
 
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
@@ -464,310 +498,265 @@ export default function LeadsPage() {
                     <SelectItem value="Contacted">Contacted</SelectItem>
                     <SelectItem value="Responded">Responded</SelectItem>
                     <SelectItem value="Qualified">Qualified</SelectItem>
-                    <SelectItem value="Converted">Converted</SelectItem>
                     <SelectItem value="Lost">Lost</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {selectedLeads.size > 0 && (
-                <div className="mt-4 flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                  <span className="text-sm font-medium text-blue-900">
-                    {selectedLeads.size} lead{selectedLeads.size !== 1 ? 's' : ''} selected
-                  </span>
-                  <Button size="sm" variant="outline" className="ml-auto">
-                    <Mail className="w-3 h-3 mr-1" />
-                    Send to Selected
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Download className="w-3 h-3 mr-1" />
-                    Export Selected
-                  </Button>
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    {selectedLeads.size > 0 ? (
+                      <span className="font-medium">{selectedLeads.size} selected</span>
+                    ) : (
+                      <span>{sortedLeads.length} leads found</span>
+                    )}
+                  </div>
+                  <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="score">Sort by Score</SelectItem>
+                      <SelectItem value="name">Sort by Name</SelectItem>
+                      <SelectItem value="rating">Sort by Rating</SelectItem>
+                      <SelectItem value="age">Sort by Age</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
+                <Button onClick={() => setExportDialogOpen(true)} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Table */}
-          <Card className="border-slate-200">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead className="w-12">
-                        <Checkbox 
-                          checked={selectedLeads.size === paginatedLeads.length && paginatedLeads.length > 0}
-                          onCheckedChange={toggleSelectAll}
-                        />
-                      </TableHead>
-                      <TableHead>Business</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Rating</TableHead>
-                      <TableHead>Score</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedLeads.map((lead) => (
-                      <TableRow key={lead.id} className="hover:bg-slate-50">
-                        <TableCell>
-                          <Checkbox 
-                            checked={selectedLeads.has(lead.id)}
-                            onCheckedChange={() => toggleLeadSelection(lead.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-slate-900">{lead.businessName}</div>
-                            {lead.contactName && (
-                              <div className="text-sm text-slate-600">{lead.contactName}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            {lead.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-slate-600">
-                            <MapPin className="w-3 h-3" />
-                            {lead.city}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {lead.email && (
-                              <div className="flex items-center gap-1 text-xs text-slate-600">
-                                <Mail className="w-3 h-3" />
-                                {lead.email}
-                              </div>
-                            )}
-                            {lead.phone && (
-                              <div className="flex items-center gap-1 text-xs text-slate-600">
-                                <Phone className="w-3 h-3" />
-                                {lead.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">{lead.rating?.toFixed(1) || "N/A"}</span>
-                            <span className="text-sm text-slate-500">
-                              ({lead.reviewCount || 0} reviews)
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(lead.leadScore)}`}>
-                            {lead.leadScore}/100
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(lead.engagementStatus)}>
-                            {lead.engagementStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-8 px-2 gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                              onClick={() => handleViewScore(lead)}
-                            >
-                              <Target className="w-3 h-3" />
-                              <span className="text-xs">Score</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-8 px-2 gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => handleGenerateProposal(lead)}
-                            >
-                              <Sparkles className="w-3 h-3" />
-                              <span className="text-xs">AI</span>
-                            </Button>
-                            {lead.website && (
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                                <Globe className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                              <Mail className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              <div className="flex items-center justify-between p-4 border-t border-slate-200">
-                <div className="text-sm text-slate-600">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredLeads.length)} of {filteredLeads.length} results
+          {/* Leads Table */}
+          <Card>
+            <CardContent className="pt-6">
+              {loading ? (
+                <LoadingSkeleton />
+              ) : sortedLeads.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    No leads found
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Try adjusting your filters or search query
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="text-sm font-medium">
-                    Page {currentPage} of {totalPages}
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-700">
+                          <th className="text-left p-4">
+                            <Checkbox 
+                              checked={selectedLeads.size === paginatedLeads.length && paginatedLeads.length > 0}
+                              onCheckedChange={toggleAllLeads}
+                            />
+                          </th>
+                          <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-400">Business</th>
+                          <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-400">Contact</th>
+                          <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-400">Location</th>
+                          <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-400">Score</th>
+                          <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-400">Status</th>
+                          <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-400">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedLeads.map((lead) => (
+                          <tr key={lead.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td className="p-4">
+                              <Checkbox 
+                                checked={selectedLeads.has(lead.id)}
+                                onCheckedChange={() => toggleLeadSelection(lead.id)}
+                              />
+                            </td>
+                            <td className="p-4">
+                              <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                  {lead.businessName}
+                                </div>
+                                <div className="text-sm text-slate-600 dark:text-slate-400">
+                                  {lead.category}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="text-sm">
+                                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                                  <Mail className="h-3 w-3" />
+                                  {lead.email}
+                                </div>
+                                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
+                                  <Phone className="h-3 w-3" />
+                                  {lead.phone}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                <MapPin className="h-3 w-3" />
+                                {lead.city}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-blue-500 to-green-500"
+                                    style={{ width: `${lead.leadScore}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                  {lead.leadScore}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <Badge className={getStatusColor(lead.engagementStatus)}>
+                                {lead.engagementStatus}
+                              </Badge>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setShowProposalGenerator(true);
+                                  }}
+                                >
+                                  <Mail className="h-3 w-3 mr-1" />
+                                  Contact
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setShowLeadScore(true);
+                                  }}
+                                >
+                                  <TrendingUp className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-6 border-t">
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* AI Proposal Generator Dialog */}
-        <Dialog open={showProposalDialog} onOpenChange={setShowProposalDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                AI Proposal Generator
-              </DialogTitle>
-              <DialogDescription>
-                Generate a personalized business proposal for {selectedLead?.businessName}
-              </DialogDescription>
-            </DialogHeader>
-            {selectedLead && <ProposalGenerator lead={selectedLead} />}
-          </DialogContent>
-        </Dialog>
-
-        {/* Lead Score Analysis Dialog */}
-        <Dialog open={showScoreDialog} onOpenChange={setShowScoreDialog}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-600" />
-                Lead Intelligence Analysis
-              </DialogTitle>
-              <DialogDescription>
-                AI-powered scoring and insights for {selectedLead?.businessName}
-              </DialogDescription>
-            </DialogHeader>
-            {selectedLead && <LeadScoreCard lead={selectedLead} />}
-          </DialogContent>
-        </Dialog>
-
         {/* Export Dialog */}
-        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-          <DialogContent className="max-w-2xl">
+        <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Download className="w-5 h-5 text-blue-600" />
-                Export Leads
-              </DialogTitle>
+              <DialogTitle>Export Leads</DialogTitle>
               <DialogDescription>
-                Export {selectedLeads.size > 0 ? `${selectedLeads.size} selected` : filteredLeads.length} leads to your preferred format
+                Choose your export format and options
               </DialogDescription>
             </DialogHeader>
 
-            {exportComplete ? (
-              <div className="py-8 text-center space-y-4">
-                <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto" />
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900">Export Complete!</h3>
-                  <p className="text-sm text-slate-600 mt-1">Your file has been downloaded successfully.</p>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Format</label>
+                <Select value={exportFormat} onValueChange={(value: ExportFormat) => setExportFormat(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="excel">Excel (XLSX)</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <Tabs value={exportFormat} onValueChange={(v) => setExportFormat(v as any)} className="mt-4">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="csv" className="gap-2">
-                    <FileText className="w-4 h-4" />
-                    CSV
-                  </TabsTrigger>
-                  <TabsTrigger value="excel" className="gap-2">
-                    <FileSpreadsheet className="w-4 h-4" />
-                    Excel
-                  </TabsTrigger>
-                  <TabsTrigger value="pdf" className="gap-2">
-                    <FileText className="w-4 h-4" />
-                    PDF
-                  </TabsTrigger>
-                </TabsList>
 
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <Label className="text-sm font-semibold text-slate-900 mb-3 block">
-                      Select Fields to Export
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {availableFields.map((field) => (
-                        <div key={field.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={field.value}
-                            checked={exportFields.includes(field.value)}
-                            onCheckedChange={() => toggleExportField(field.value)}
-                          />
-                          <label
-                            htmlFor={field.value}
-                            className="text-sm text-slate-700 cursor-pointer"
-                          >
-                            {field.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {exportProgress > 0 && exportProgress < 100 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-600">Preparing export...</span>
-                        <span className="font-medium text-blue-600">{Math.round(exportProgress)}%</span>
-                      </div>
-                      <Progress value={exportProgress} className="h-2" />
-                    </div>
-                  )}
-
-                  <div className="flex gap-3 pt-4">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setShowExportDialog(false)}
-                      disabled={exportProgress > 0 && exportProgress < 100}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      className="flex-1 gap-2"
-                      onClick={handleExport}
-                      disabled={exportFields.length === 0 || (exportProgress > 0 && exportProgress < 100)}
-                    >
-                      <Download className="w-4 h-4" />
-                      Export {exportFormat.toUpperCase()}
-                    </Button>
-                  </div>
+              {exportProgress > 0 && (
+                <div className="space-y-2">
+                  <Progress value={exportProgress} />
+                  <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
+                    {exportComplete ? "Export complete!" : `Exporting... ${exportProgress}%`}
+                  </p>
                 </div>
-              </Tabs>
-            )}
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setExportDialogOpen(false)}
+                  className="flex-1"
+                  disabled={exportProgress > 0 && !exportComplete}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleExport}
+                  className="flex-1"
+                  disabled={exportProgress > 0 && !exportComplete}
+                >
+                  {exportProgress > 0 && !exportComplete ? "Exporting..." : "Export"}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
+
+        {/* Proposal Generator Dialog */}
+        {selectedLead && (
+          <ProposalGenerator
+            lead={selectedLead}
+            open={showProposalGenerator}
+            onOpenChange={setShowProposalGenerator}
+          />
+        )}
+
+        {/* Lead Score Dialog */}
+        {selectedLead && (
+          <LeadScoreCard
+            lead={selectedLead}
+            open={showLeadScore}
+            onOpenChange={setShowLeadScore}
+          />
+        )}
       </DashboardLayout>
     </>
   );

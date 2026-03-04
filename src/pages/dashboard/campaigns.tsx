@@ -1,131 +1,135 @@
+import { useState, useEffect } from "react";
 import { SEO } from "@/components/SEO";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Mail, 
-  Plus, 
-  Eye, 
-  Clock, 
   Send, 
-  Pause,
-  Play,
-  BarChart3,
-  Users,
-  MousePointerClick
+  TrendingUp, 
+  Users, 
+  MousePointerClick,
+  MessageSquare,
+  Calendar,
+  PlayCircle,
+  PauseCircle,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
-import { useState } from "react";
 import Link from "next/link";
 import type { Campaign } from "@/types/lead";
 import { useRealtimeCampaigns } from "@/hooks/useRealtimeCampaigns";
 import { campaignService } from "@/services/campaignService";
-import { useEffect } from "react";
-
-const MOCK_CAMPAIGNS: Campaign[] = [
-  {
-    id: "1",
-    name: "Q1 Tech Outreach",
-    subject: "Transform Your Business with Modern Technology",
-    status: "active",
-    recipients: 245,
-    sent: 245,
-    opened: 167,
-    clicked: 89,
-    replied: 23,
-    conversionRate: 15.5,
-    createdAt: "2026-02-15T10:00:00Z",
-    updatedAt: "2026-02-15T10:00:00Z"
-  },
-  {
-    id: "2",
-    name: "Legal Services Campaign",
-    subject: "Upgrade Your Legal Practice Website",
-    status: "completed",
-    recipients: 128,
-    sent: 128,
-    opened: 94,
-    clicked: 52,
-    replied: 18,
-    conversionRate: 12.3,
-    createdAt: "2026-01-20T14:00:00Z",
-    updatedAt: "2026-01-20T14:00:00Z"
-  },
-  {
-    id: "3",
-    name: "Healthcare Provider Outreach",
-    subject: "Modern Patient Engagement Solutions",
-    status: "scheduled",
-    recipients: 186,
-    sent: 0,
-    opened: 0,
-    clicked: 0,
-    replied: 0,
-    conversionRate: 0,
-    scheduledAt: "2026-03-10T09:00:00Z",
-    createdAt: "2026-03-01T11:30:00Z",
-    updatedAt: "2026-03-01T11:30:00Z"
-  },
-  {
-    id: "4",
-    name: "Real Estate Follow-up",
-    subject: "Enhance Your Property Listings Online",
-    status: "paused",
-    recipients: 92,
-    sent: 45,
-    opened: 31,
-    clicked: 14,
-    replied: 5,
-    conversionRate: 8.2,
-    createdAt: "2026-02-25T08:00:00Z",
-    updatedAt: "2026-02-25T08:00:00Z"
-  }
-];
+import { useToast } from "@/hooks/use-toast";
 
 export default function CampaignsPage() {
+  const { toast } = useToast();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  
+  // Data state
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]); // Start empty, fetch real data
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch initial data
-  useEffect(() => {
-    async function fetchCampaigns() {
-      try {
-        const { data, error } = await campaignService.getCampaigns();
-        if (error) {
-          console.error("Error fetching campaigns:", error);
-          // Fallback to mock data if DB is empty or error
-          if (MOCK_CAMPAIGNS.length > 0) setCampaigns(MOCK_CAMPAIGNS);
-        } else if (data && data.length > 0) {
-          setCampaigns(data);
-        } else {
-          setCampaigns(MOCK_CAMPAIGNS); // Fallback for demo if no real data
-        }
-      } catch (err) {
-        console.error("Failed to fetch campaigns:", err);
-        setCampaigns(MOCK_CAMPAIGNS);
-      } finally {
-        setLoading(false);
+  // Fetch campaigns with retry logic
+  const fetchCampaigns = async (isRetry = false) => {
+    try {
+      if (!isRetry) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
       }
+      setError(null);
+      
+      const { data, error: fetchError } = await campaignService.getCampaigns();
+      
+      if (fetchError) {
+        throw new Error(fetchError.message || "Failed to fetch campaigns");
+      }
+      
+      if (data && data.length > 0) {
+        setCampaigns(data);
+        toast({
+          title: "Campaigns loaded",
+          description: `Successfully loaded ${data.length} campaigns`,
+          duration: 3000,
+        });
+      } else {
+        // Use empty array if no campaigns
+        setCampaigns([]);
+        toast({
+          title: "No campaigns",
+          description: "Create your first campaign to get started",
+          duration: 3000,
+        });
+      }
+      setRetryCount(0);
+    } catch (err) {
+      console.error("Error fetching campaigns:", err);
+      setError(err instanceof Error ? err.message : "Failed to load campaigns");
+      
+      // Auto-retry logic (max 3 attempts)
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchCampaigns(true);
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+        
+        toast({
+          title: "Connection issue",
+          description: `Retrying... (Attempt ${retryCount + 1}/3)`,
+          variant: "destructive",
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "Failed to load campaigns",
+          description: "Please check your connection and try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
     }
+  };
 
+  // Initial data fetch
+  useEffect(() => {
     fetchCampaigns();
   }, []);
 
   // Real-time subscription
   useRealtimeCampaigns({
-    enabled: true,
+    enabled: !loading && !error,
     onInsert: (newCampaign) => {
-      console.log("New campaign created:", newCampaign);
       setCampaigns(prev => [newCampaign, ...prev]);
+      toast({
+        title: "New campaign created",
+        description: newCampaign.name,
+        duration: 3000,
+      });
     },
     onUpdate: (updatedCampaign) => {
-      console.log("Campaign updated:", updatedCampaign);
-      setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c));
+      setCampaigns(prev => prev.map(campaign => 
+        campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+      ));
     },
     onDelete: (deletedId) => {
-      console.log("Campaign deleted:", deletedId);
-      setCampaigns(prev => prev.filter(c => c.id !== deletedId));
+      setCampaigns(prev => prev.filter(campaign => campaign.id !== deletedId));
+      toast({
+        title: "Campaign deleted",
+        description: "A campaign was removed",
+        duration: 3000,
+      });
     }
   });
 
@@ -141,188 +145,358 @@ export default function CampaignsPage() {
     return colors[status] || colors["draft"];
   };
 
-  const calculateOpenRate = (opened: number, sent: number) => {
-    if (sent === 0) return 0;
-    return Math.round((opened / sent) * 100);
+  const getStatusIcon = (status: Campaign["status"]) => {
+    switch (status) {
+      case "active":
+        return <PlayCircle className="w-4 h-4" />;
+      case "paused":
+        return <PauseCircle className="w-4 h-4" />;
+      case "completed":
+        return <CheckCircle2 className="w-4 h-4" />;
+      case "cancelled":
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Calendar className="w-4 h-4" />;
+    }
   };
 
-  const calculateClickRate = (clicked: number, sent: number) => {
-    if (sent === 0) return 0;
-    return Math.round((clicked / sent) * 100);
-  };
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-[200px]" />
+              <Skeleton className="h-6 w-[80px]" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-4 gap-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // Calculate total metrics
+  const totalMetrics = campaigns.reduce((acc, campaign) => ({
+    recipients: acc.recipients + (campaign.recipients || 0),
+    sent: acc.sent + (campaign.sent || 0),
+    opened: acc.opened + (campaign.opened || 0),
+    clicked: acc.clicked + (campaign.clicked || 0),
+    replied: acc.replied + (campaign.replied || 0)
+  }), { recipients: 0, sent: 0, opened: 0, clicked: 0, replied: 0 });
+
+  const overallOpenRate = totalMetrics.sent > 0 
+    ? ((totalMetrics.opened / totalMetrics.sent) * 100).toFixed(1)
+    : "0.0";
+
+  const overallClickRate = totalMetrics.sent > 0 
+    ? ((totalMetrics.clicked / totalMetrics.sent) * 100).toFixed(1)
+    : "0.0";
 
   return (
     <>
-      <SEO title="Email Campaigns - Opportunity Finder" />
+      <SEO 
+        title="Email Campaigns - Opportunity Finder"
+        description="Manage and track your email outreach campaigns"
+      />
       <DashboardLayout>
         <div className="space-y-6">
-          {/* Header */}
+          {/* Header with connection status */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Email Campaigns</h1>
-              <p className="text-slate-600 mt-1">Manage your outreach campaigns and track performance</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                Email Campaigns
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1">
+                Track and manage your outreach efforts
+              </p>
             </div>
-            <Link href="/dashboard/campaigns/new">
-              <Button className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700">
-                <Plus className="w-4 h-4" />
-                New Campaign
+            <div className="flex items-center gap-3">
+              {error && (
+                <Badge variant="destructive" className="flex items-center gap-2">
+                  <XCircle className="h-3 w-3" />
+                  Connection Error
+                </Badge>
+              )}
+              {!error && !loading && (
+                <Badge variant="outline" className="flex items-center gap-2 bg-green-50 text-green-700 border-green-200">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Live Data
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchCampaigns(true)}
+                disabled={isRefreshing}
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
               </Button>
-            </Link>
+              <Link href="/dashboard/campaigns/new">
+                <Button className="gap-2">
+                  <Send className="h-4 w-4" />
+                  New Campaign
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          {/* Stats Overview */}
+          {/* Error banner */}
+          {error && retryCount >= 3 && (
+            <Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-900 dark:text-red-100">
+                      Connection Issue
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                      {error}. Please check your internet connection or try again later.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setRetryCount(0);
+                        fetchCampaigns(true);
+                      }}
+                      className="mt-3"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stats Cards */}
           <div className="grid md:grid-cols-4 gap-6">
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Sent</CardTitle>
-                <Mail className="w-4 h-4 text-blue-600" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Total Campaigns
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">418</div>
-                <p className="text-xs text-green-600 mt-1">+12% from last month</p>
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {loading ? <Skeleton className="h-8 w-16" /> : campaigns.length}
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Avg. Open Rate</CardTitle>
-                <Eye className="w-4 h-4 text-green-600" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Emails Sent
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">68.3%</div>
-                <p className="text-xs text-green-600 mt-1">+5.2% from last month</p>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {loading ? <Skeleton className="h-8 w-16" /> : totalMetrics.sent.toLocaleString()}
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Avg. Click Rate</CardTitle>
-                <MousePointerClick className="w-4 h-4 text-purple-600" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Open Rate
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">35.4%</div>
-                <p className="text-xs text-green-600 mt-1">+3.8% from last month</p>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {loading ? <Skeleton className="h-8 w-16" /> : `${overallOpenRate}%`}
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Replies</CardTitle>
-                <Send className="w-4 h-4 text-amber-600" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Click Rate
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">46</div>
-                <p className="text-xs text-green-600 mt-1">+8 from last month</p>
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {loading ? <Skeleton className="h-8 w-16" /> : `${overallClickRate}%`}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Campaigns List */}
-          <div className="space-y-4">
-            {campaigns.map((campaign) => (
-              <Card key={campaign.id} className="border-slate-200 hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{campaign.name}</h3>
-                        <Badge className={getStatusColor(campaign.status)}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-slate-600 mb-1">
-                        <span className="font-medium">Subject:</span> {campaign.subject}
-                      </p>
-                      {campaign.scheduledAt && (
-                        <div className="flex items-center gap-1 text-sm text-slate-600">
-                          <Clock className="w-3 h-3" />
-                          Scheduled for {new Date(campaign.scheduledAt).toLocaleString()}
+          {loading ? (
+            <LoadingSkeleton />
+          ) : campaigns.length === 0 ? (
+            <Card>
+              <CardContent className="pt-12 pb-12">
+                <div className="text-center">
+                  <Mail className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    No campaigns yet
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400 mb-6">
+                    Create your first email campaign to start reaching out to leads
+                  </p>
+                  <Link href="/dashboard/campaigns/new">
+                    <Button>
+                      <Send className="h-4 w-4 mr-2" />
+                      Create Campaign
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {campaigns.map((campaign) => (
+                <Card key={campaign.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${getStatusColor(campaign.status)}`}>
+                          {getStatusIcon(campaign.status)}
                         </div>
-                      )}
+                        <div>
+                          <CardTitle className="text-xl">{campaign.name}</CardTitle>
+                          <CardDescription className="mt-1">
+                            {campaign.description || campaign.subject}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Badge className={getStatusColor(campaign.status)}>
+                        {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {campaign.status === "active" && (
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-5 gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                          <Users className="h-4 w-4" />
+                          Recipients
+                        </div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                          {campaign.recipients?.toLocaleString() || 0}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                          <Send className="h-4 w-4" />
+                          Sent
+                        </div>
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {campaign.sent?.toLocaleString() || 0}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                          <Mail className="h-4 w-4" />
+                          Opens
+                        </div>
+                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                          {campaign.opened?.toLocaleString() || 0}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {campaign.sent && campaign.sent > 0 
+                            ? `${((campaign.opened || 0) / campaign.sent * 100).toFixed(1)}%`
+                            : "0%"}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                          <MousePointerClick className="h-4 w-4" />
+                          Clicks
+                        </div>
+                        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                          {campaign.clicked?.toLocaleString() || 0}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {campaign.sent && campaign.sent > 0 
+                            ? `${((campaign.clicked || 0) / campaign.sent * 100).toFixed(1)}%`
+                            : "0%"}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                          <MessageSquare className="h-4 w-4" />
+                          Replies
+                        </div>
+                        <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                          {campaign.replied?.toLocaleString() || 0}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {campaign.sent && campaign.sent > 0 
+                            ? `${((campaign.replied || 0) / campaign.sent * 100).toFixed(1)}%`
+                            : "0%"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {campaign.conversionRate !== undefined && campaign.conversionRate > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Conversion Rate
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Progress value={campaign.conversionRate} className="w-32" />
+                            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                              {campaign.conversionRate.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                      <div className="text-xs text-slate-500">
+                        {campaign.scheduledAt && (
+                          <span>Scheduled: {new Date(campaign.scheduledAt).toLocaleDateString()}</span>
+                        )}
+                        {campaign.sentAt && (
+                          <span>Sent: {new Date(campaign.sentAt).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
                         <Button variant="outline" size="sm">
-                          <Pause className="w-3 h-3 mr-1" />
-                          Pause
-                        </Button>
-                      )}
-                      {campaign.status === "paused" && (
-                        <Button variant="outline" size="sm">
-                          <Play className="w-3 h-3 mr-1" />
-                          Resume
-                        </Button>
-                      )}
-                      <Link href={`/dashboard/campaigns/${campaign.id}`}>
-                        <Button variant="outline" size="sm">
-                          <BarChart3 className="w-3 h-3 mr-1" />
                           View Details
                         </Button>
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-4">
-                    <div>
-                      <div className="text-xs text-slate-600 mb-1">Recipients</div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-slate-400" />
-                        <span className="text-sm font-semibold text-slate-900">{campaign.recipients}</span>
+                        {campaign.status === "active" && (
+                          <Button variant="outline" size="sm">
+                            <PauseCircle className="h-4 w-4 mr-1" />
+                            Pause
+                          </Button>
+                        )}
+                        {campaign.status === "paused" && (
+                          <Button variant="outline" size="sm">
+                            <PlayCircle className="h-4 w-4 mr-1" />
+                            Resume
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-xs text-slate-600 mb-1">Sent</div>
-                      <div className="flex items-center gap-1">
-                        <Mail className="w-3 h-3 text-blue-400" />
-                        <span className="text-sm font-semibold text-slate-900">{campaign.sent}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-600 mb-1">Opened</div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3 text-green-400" />
-                        <span className="text-sm font-semibold text-slate-900">
-                          {campaign.opened} ({calculateOpenRate(campaign.opened, campaign.sent)}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-600 mb-1">Clicked</div>
-                      <div className="flex items-center gap-1">
-                        <MousePointerClick className="w-3 h-3 text-purple-400" />
-                        <span className="text-sm font-semibold text-slate-900">
-                          {campaign.clicked} ({calculateClickRate(campaign.clicked, campaign.sent)}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-600 mb-1">Replied</div>
-                      <div className="flex items-center gap-1">
-                        <Send className="w-3 h-3 text-amber-400" />
-                        <span className="text-sm font-semibold text-slate-900">{campaign.replied}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {campaign.sent > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex-1 bg-slate-200 rounded-full h-2">
-                          <div 
-                            className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all"
-                            style={{ width: `${calculateOpenRate(campaign.opened, campaign.sent)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-slate-600 w-16 text-right">
-                          {calculateOpenRate(campaign.opened, campaign.sent)}% open
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </DashboardLayout>
     </>

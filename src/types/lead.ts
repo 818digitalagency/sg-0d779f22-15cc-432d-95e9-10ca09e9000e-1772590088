@@ -64,6 +64,9 @@ export const CATEGORIES = [
   "Other"
 ];
 
+// Export as BUSINESS_CATEGORIES for backward compatibility
+export const BUSINESS_CATEGORIES = CATEGORIES;
+
 export const NB_CITIES = [
   "Moncton",
   "Saint John",

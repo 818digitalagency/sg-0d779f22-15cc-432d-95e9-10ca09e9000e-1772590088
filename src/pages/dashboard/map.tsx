@@ -1,334 +1,424 @@
+import { useState, useEffect, useRef } from "react";
 import { SEO } from "@/components/SEO";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   MapPin, 
-  Star, 
-  Mail, 
+  Building2, 
   Phone, 
+  Mail, 
   Globe, 
-  ExternalLink,
-  Search,
-  X,
-  Building2,
-  TrendingUp,
-  Calendar
+  Star,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
-import { useState } from "react";
+import { googleMapsService, NB_COORDINATES } from "@/lib/maps/googleMaps";
+import { leadService } from "@/services/leadService";
+import { useRealtimeLeads } from "@/hooks/useRealtimeLeads";
 import type { Lead } from "@/types/lead";
 import { CATEGORIES, NB_CITIES } from "@/types/lead";
 
-const MOCK_LEADS: Lead[] = [
-  {
-    id: "1",
-    businessName: "Maritime Tech Solutions",
-    contactName: "John Smith",
-    email: "john@maritimetech.ca",
-    phone: "(506) 555-0123",
-    address: "123 Main St",
-    city: "Moncton",
-    postalCode: "E1C 1A1",
-    category: "IT & Technology",
-    industry: "IT Services",
-    businessAge: 8,
-    rating: 4.5,
-    reviewCount: 42,
-    website: "https://maritimetech.ca",
-    businessDescription: "Full-service IT consulting and managed services",
-    dataSource: "Google Business",
-    leadScore: 85,
-    websiteQualityScore: 72,
-    status: "new",
-    engagementStatus: "new",
-    tags: ["tech", "priority"],
-    lastContactDate: "2026-02-20T14:00:00Z",
-    createdAt: "2026-01-15T10:00:00Z",
-    updatedAt: "2026-02-25T14:00:00Z"
-  },
-  {
-    id: "2",
-    businessName: "Atlantic Accounting Services",
-    contactName: "Sarah Johnson",
-    email: "sarah@atlanticaccounting.ca",
-    phone: "(506) 555-0124",
-    address: "456 King St",
-    city: "Saint John",
-    postalCode: "E2L 2B2",
-    category: "Accounting",
-    industry: "Professional Services",
-    businessAge: 15,
-    rating: 4.8,
-    reviewCount: 67,
-    website: "https://atlanticaccounting.ca",
-    businessDescription: "Comprehensive accounting and tax services",
-    dataSource: "LinkedIn",
-    leadScore: 92,
-    websiteQualityScore: 45,
-    status: "new",
-    engagementStatus: "new",
-    tags: ["accounting", "established"],
-    lastContactDate: "2026-02-15T09:00:00Z",
-    createdAt: "2026-01-20T14:00:00Z",
-    updatedAt: "2026-02-28T09:00:00Z"
-  }
-];
-
-export default function MapViewPage() {
+export default function MapPage() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapError, setMapError] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
-  const filteredLeads = MOCK_LEADS.filter(lead => {
-    const matchesSearch = searchQuery === "" || 
-      lead.businessName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || lead.category === selectedCategory;
-    const matchesCity = selectedCity === "all" || lead.city === selectedCity;
-    return matchesSearch && matchesCategory && matchesCity;
+  // Fetch initial leads
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const response = await leadService.getLeads();
+        if (response.data) {
+          setLeads(response.data);
+        }
+        if (response.error) {
+          setError(response.error.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load leads");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLeads();
+  }, []);
+
+  // Real-time subscription
+  useRealtimeLeads({
+    enabled: true,
+    onInsert: (lead) => setLeads(prev => [...prev, lead]),
+    onUpdate: (lead) => setLeads(prev => prev.map(l => l.id === lead.id ? lead : l)),
+    onDelete: (id) => setLeads(prev => prev.filter(l => l.id !== id))
   });
 
-  const getScoreColor = (score: number) => {
-    if (score >= 85) return "text-green-600 bg-green-50 border-green-200";
-    if (score >= 70) return "text-amber-600 bg-amber-50 border-amber-200";
-    return "text-slate-600 bg-slate-50 border-slate-200";
+  // Initialize Google Maps
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const initMap = async () => {
+      try {
+        setMapLoading(true);
+        setMapError(null);
+
+        // Check if API key is configured
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (!apiKey || apiKey === "your_google_maps_api_key_here") {
+          setMapError("Google Maps API key not configured. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your environment variables.");
+          setMapLoading(false);
+          return;
+        }
+
+        await googleMapsService.loadGoogleMapsApi();
+        await googleMapsService.initMap(mapRef.current);
+        setMapLoading(false);
+      } catch (err) {
+        console.error("Error initializing map:", err);
+        setMapError(err instanceof Error ? err.message : "Failed to load Google Maps");
+        setMapLoading(false);
+      }
+    };
+
+    initMap();
+
+    return () => {
+      googleMapsService.destroy();
+    };
+  }, []);
+
+  // Update markers when leads or filters change
+  useEffect(() => {
+    if (mapLoading || !leads.length) return;
+
+    const filteredLeads = leads.filter(lead => {
+      if (selectedCategory !== "all" && lead.industry !== selectedCategory) return false;
+      if (selectedCity !== "all" && lead.city !== selectedCity) return false;
+      if (selectedStatus !== "all") {
+        if (selectedStatus === "high-score" && lead.leadScore < 70) return false;
+        if (selectedStatus === "contacted" && lead.engagementStatus !== "contacted") return false;
+        if (selectedStatus === "qualified" && lead.engagementStatus !== "qualified") return false;
+      }
+      return true;
+    });
+
+    googleMapsService.addMarkers(filteredLeads, (lead) => {
+      setSelectedLead(lead);
+    });
+
+    if (filteredLeads.length > 0) {
+      googleMapsService.fitBoundsToMarkers();
+    }
+  }, [leads, selectedCategory, selectedCity, selectedStatus, mapLoading]);
+
+  const getStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      new: "bg-gray-100 text-gray-700",
+      contacted: "bg-blue-100 text-blue-700",
+      qualified: "bg-green-100 text-green-700",
+      proposal_sent: "bg-yellow-100 text-yellow-700",
+      negotiation: "bg-orange-100 text-orange-700",
+      won: "bg-green-100 text-green-700",
+      lost: "bg-red-100 text-red-700"
+    };
+    return colors[status] || colors.new;
   };
 
   return (
     <>
-      <SEO title="Map View - Opportunity Finder" />
+      <SEO 
+        title="Geographic View | Opportunity Finder"
+        description="Visualize leads across New Brunswick on an interactive map."
+      />
       <DashboardLayout>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Geographic Lead Map</h1>
-            <p className="text-slate-600 mt-1">Visualize business opportunities across New Brunswick</p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 border-slate-200">
-              <CardContent className="p-0">
-                <div className="bg-slate-100 rounded-lg h-[600px] flex items-center justify-center relative">
-                  <div className="text-center p-8">
-                    <MapPin className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Interactive Map</h3>
-                    <p className="text-slate-600 max-w-md">
-                      This would integrate with Google Maps API or Mapbox to display lead locations with clustering markers. 
-                      Click markers to view lead details in the side panel.
-                    </p>
-                  </div>
-                  
-                  <div className="absolute top-4 left-4 right-4 flex gap-2">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        placeholder="Search on map..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 bg-white"
-                      />
-                    </div>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-48 bg-white">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {CATEGORIES.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={selectedCity} onValueChange={setSelectedCity}>
-                      <SelectTrigger className="w-48 bg-white">
-                        <SelectValue placeholder="City" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Cities</SelectItem>
-                        {NB_CITIES.map(city => (
-                          <SelectItem key={city} value={city}>{city}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="contacted">Contacted</SelectItem>
-                        <SelectItem value="qualified">Qualified</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-              <Card className="border-slate-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Visible Leads</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 max-h-[600px] overflow-y-auto">
-                  {filteredLeads.map((lead) => (
-                    <button
-                      key={lead.id}
-                      onClick={() => setSelectedLead(lead)}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedLead?.id === lead.id
-                          ? "bg-blue-50 border-2 border-blue-200"
-                          : "bg-slate-50 hover:bg-slate-100 border-2 border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-slate-900 truncate">{lead.businessName}</div>
-                          <div className="text-xs text-slate-600 flex items-center gap-1 mt-1">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            {lead.city}
-                          </div>
-                        </div>
-                        <Badge className={`ml-2 ${getScoreColor(lead.leadScore)}`}>
-                          {lead.leadScore}
-                        </Badge>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {lead.category}
-                      </Badge>
-                    </button>
-                  ))}
-                  {filteredLeads.length === 0 && (
-                    <div className="text-center py-8 text-slate-500">
-                      No leads match your filters
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Geographic Lead Map
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400">
+                Visualize and explore leads across New Brunswick.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-sm">
+                <MapPin className="mr-1 h-3 w-3" />
+                {leads.length} Leads
+              </Badge>
             </div>
           </div>
 
-          {selectedLead && (
-            <Card className="border-slate-200 border-2 border-blue-200">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-xl">{selectedLead.businessName}</CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        {selectedLead.category}
-                      </Badge>
-                      <Badge className={getScoreColor(selectedLead.leadScore)}>
-                        Score: {selectedLead.leadScore}/100
-                      </Badge>
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Industry
+                  </label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Industries" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Industries</SelectItem>
+                      {CATEGORIES.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    City
+                  </label>
+                  <Select value={selectedCity} onValueChange={setSelectedCity}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Cities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cities</SelectItem>
+                      {NB_CITIES.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Status
+                  </label>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="high-score">High Score (70+)</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Map and Details */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Map */}
+            <Card className="lg:col-span-2 h-[600px] overflow-hidden">
+              <CardContent className="p-0 h-full relative">
+                {mapError ? (
+                  <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                    <div className="text-center space-y-4 p-6">
+                      <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                          Google Maps Not Configured
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 max-w-md">
+                          {mapError}
+                        </p>
+                        <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-left">
+                          <p className="text-xs font-mono text-slate-700 dark:text-slate-300 mb-2">
+                            Add to .env.local:
+                          </p>
+                          <code className="text-xs bg-white dark:bg-slate-900 px-2 py-1 rounded">
+                            NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key_here
+                          </code>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedLead(null)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedLead.businessDescription && (
-                  <p className="text-slate-600">{selectedLead.businessDescription}</p>
+                ) : mapLoading ? (
+                  <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                    <div className="text-center space-y-4">
+                      <Loader2 className="h-12 w-12 text-blue-500 animate-spin mx-auto" />
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Loading Google Maps...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div ref={mapRef} className="w-full h-full" />
                 )}
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900 mb-2">Contact Information</h4>
-                    <div className="space-y-2">
-                      {selectedLead.email && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <Mail className="w-4 h-4" />
-                          <a href={`mailto:${selectedLead.email}`} className="hover:text-blue-600">
-                            {selectedLead.email}
-                          </a>
-                        </div>
-                      )}
-                      {selectedLead.phone && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <Phone className="w-4 h-4" />
-                          <a href={`tel:${selectedLead.phone}`} className="hover:text-blue-600">
-                            {selectedLead.phone}
-                          </a>
-                        </div>
-                      )}
-                      {selectedLead.website && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <Globe className="w-4 h-4" />
-                          <a href={selectedLead.website} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
-                            Visit Website
-                          </a>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Building2 className="w-4 h-4" />
-                        {selectedLead.address}, {selectedLead.city}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900 mb-2">Business Metrics</h4>
-                    <div className="space-y-2">
-                      {selectedLead.businessDescription ? (
-                        <p className="text-sm text-slate-600">{selectedLead.businessDescription}</p>
-                      ) : (
-                        <p className="text-sm text-slate-500 italic">No description available</p>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">{selectedLead.rating?.toFixed(1) || "N/A"}</span>
-                          <span className="text-slate-500">
-                            ({selectedLead.reviewCount || 0})
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <Globe className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium">Score: {selectedLead.leadScore}</span>
-                        </div>
-                        
-                        {selectedLead.websiteQualityScore && (
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="h-4 w-4 text-green-600" />
-                            <span className="text-slate-600">Web: {selectedLead.websiteQualityScore}%</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4 border-t border-slate-200">
-                  <Button className="flex-1 gap-2">
-                    <Mail className="w-4 h-4" />
-                    Send Proposal
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <ExternalLink className="w-4 h-4" />
-                    View Full Profile
-                  </Button>
-                </div>
               </CardContent>
             </Card>
-          )}
+
+            {/* Lead Details Panel */}
+            <Card className="h-[600px] overflow-y-auto">
+              <CardHeader className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b">
+                <CardTitle className="text-lg">
+                  {selectedLead ? "Lead Details" : "Select a Lead"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                {selectedLead ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-2">
+                        {selectedLead.businessName}
+                      </h3>
+                      <Badge className={getStatusBadge(selectedLead.engagementStatus)}>
+                        {selectedLead.engagementStatus.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-2">
+                        <Building2 className="h-4 w-4 text-slate-500 mt-0.5" />
+                        <div>
+                          <p className="text-slate-600 dark:text-slate-400">Industry</p>
+                          <p className="font-medium text-slate-900 dark:text-white">
+                            {selectedLead.industry}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                        <div>
+                          <p className="text-slate-600 dark:text-slate-400">Location</p>
+                          <p className="font-medium text-slate-900 dark:text-white">
+                            {selectedLead.city}, {selectedLead.province}
+                          </p>
+                          {selectedLead.address && (
+                            <p className="text-xs text-slate-500">{selectedLead.address}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {selectedLead.contactName && (
+                        <div className="flex items-start gap-2">
+                          <Mail className="h-4 w-4 text-slate-500 mt-0.5" />
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400">Contact</p>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {selectedLead.contactName}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedLead.email && (
+                        <div className="flex items-start gap-2">
+                          <Mail className="h-4 w-4 text-slate-500 mt-0.5" />
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400">Email</p>
+                            <a 
+                              href={`mailto:${selectedLead.email}`}
+                              className="font-medium text-blue-600 hover:underline"
+                            >
+                              {selectedLead.email}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedLead.phone && (
+                        <div className="flex items-start gap-2">
+                          <Phone className="h-4 w-4 text-slate-500 mt-0.5" />
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400">Phone</p>
+                            <a 
+                              href={`tel:${selectedLead.phone}`}
+                              className="font-medium text-blue-600 hover:underline"
+                            >
+                              {selectedLead.phone}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedLead.website && (
+                        <div className="flex items-start gap-2">
+                          <Globe className="h-4 w-4 text-slate-500 mt-0.5" />
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400">Website</p>
+                            <a 
+                              href={selectedLead.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-blue-600 hover:underline"
+                            >
+                              Visit Website →
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedLead.rating && (
+                        <div className="flex items-start gap-2">
+                          <Star className="h-4 w-4 text-yellow-500 mt-0.5" />
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400">Rating</p>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              ⭐ {selectedLead.rating} ({selectedLead.reviewCount} reviews)
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Lead Score
+                          </span>
+                          <span className={`text-lg font-bold ${
+                            selectedLead.leadScore >= 80 ? "text-green-600" :
+                            selectedLead.leadScore >= 60 ? "text-blue-600" :
+                            selectedLead.leadScore >= 40 ? "text-yellow-600" :
+                            "text-red-600"
+                          }`}>
+                            {selectedLead.leadScore}
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${
+                              selectedLead.leadScore >= 80 ? "bg-green-500" :
+                              selectedLead.leadScore >= 60 ? "bg-blue-500" :
+                              selectedLead.leadScore >= 40 ? "bg-yellow-500" :
+                              "bg-red-500"
+                            }`}
+                            style={{ width: `${selectedLead.leadScore}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 space-y-2">
+                      <Button className="w-full" size="sm">
+                        Send Proposal
+                      </Button>
+                      <Button className="w-full" variant="outline" size="sm">
+                        View Full Profile
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <MapPin className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                    <p className="text-slate-500 dark:text-slate-400">
+                      Click on a map marker to view lead details
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </DashboardLayout>
     </>

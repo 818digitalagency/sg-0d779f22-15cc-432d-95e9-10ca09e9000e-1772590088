@@ -19,12 +19,15 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Pause,
+  Play
 } from "lucide-react";
 import Link from "next/link";
 import type { Campaign } from "@/types/lead";
 import { useRealtimeCampaigns } from "@/hooks/useRealtimeCampaigns";
 import { campaignService } from "@/services/campaignService";
+import { emailService } from "@/services/emailService";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CampaignsPage() {
@@ -35,6 +38,7 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sendingCampaign, setSendingCampaign] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -132,6 +136,45 @@ export default function CampaignsPage() {
       });
     }
   });
+
+  const handleSendCampaign = async (campaignId: string) => {
+    if (!emailService.isConfigured()) {
+      alert("Email service not configured. Please add NEXT_PUBLIC_SENDGRID_API_KEY or NEXT_PUBLIC_AWS_SES_ACCESS_KEY to your environment variables.");
+      return;
+    }
+
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (!campaign) return;
+
+    if (!confirm(`Send campaign "${campaign.name}" to ${campaign.recipients} recipients?`)) {
+      return;
+    }
+
+    setSendingCampaign(campaignId);
+
+    try {
+      // In a real implementation, this would:
+      // 1. Fetch leads associated with this campaign
+      // 2. Call emailService.sendCampaignEmails()
+      // 3. Update campaign status and metrics
+      
+      // Mock implementation for now
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update campaign status to 'active'
+      await campaignService.updateCampaign(campaignId, {
+        status: "active",
+        sentAt: new Date().toISOString()
+      });
+
+      alert(`Campaign "${campaign.name}" sent successfully!`);
+    } catch (error) {
+      console.error("Error sending campaign:", error);
+      alert("Failed to send campaign. Please try again.");
+    } finally {
+      setSendingCampaign(null);
+    }
+  };
 
   const getStatusColor = (status: Campaign["status"]) => {
     const colors = {
@@ -478,15 +521,34 @@ export default function CampaignsPage() {
                         <Button variant="outline" size="sm">
                           View Details
                         </Button>
+                        {campaign.status === "draft" && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleSendCampaign(campaign.id)}
+                            disabled={sendingCampaign === campaign.id}
+                          >
+                            {sendingCampaign === campaign.id ? (
+                              <>
+                                <Mail className="mr-2 h-4 w-4 animate-spin" />
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Send Campaign
+                              </>
+                            )}
+                          </Button>
+                        )}
                         {campaign.status === "active" && (
-                          <Button variant="outline" size="sm">
-                            <PauseCircle className="h-4 w-4 mr-1" />
+                          <Button size="sm" variant="outline">
+                            <Pause className="mr-2 h-4 w-4" />
                             Pause
                           </Button>
                         )}
                         {campaign.status === "paused" && (
-                          <Button variant="outline" size="sm">
-                            <PlayCircle className="h-4 w-4 mr-1" />
+                          <Button size="sm">
+                            <Play className="mr-2 h-4 w-4" />
                             Resume
                           </Button>
                         )}

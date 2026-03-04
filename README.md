@@ -76,6 +76,16 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
+## 📧 **Email Campaign Setup (Optional)**
+
+To send email
+...
+BER` in `.env.local`
+6. Test the map at `/dashboard/map`
+7. See full guide: `GOOGLE_MAPS_SETUP.md`
+
+---
+
 ## 📁 Project Structure
 
 ```

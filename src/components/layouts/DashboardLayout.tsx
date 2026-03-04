@@ -37,6 +37,7 @@ import {
   AlertCircle,
   Wifi,
   WifiOff,
+  MapPin,
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";

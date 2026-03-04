@@ -117,6 +117,48 @@ export default function AnalyticsPage() {
   const totalOpens = campaigns.reduce((acc, curr) => acc + (curr.opened || 0), 0);
   const openRate = totalEmailsSent > 0 ? ((totalOpens / totalEmailsSent) * 100).toFixed(1) : "0.0";
 
+  // Calculate leads by industry from actual data
+  const leadsByIndustry = leads.reduce((acc, lead) => {
+    const industry = lead.industry || "Unknown";
+    acc[industry] = (acc[industry] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const industryData = Object.entries(leadsByIndustry)
+    .map(([name, count]) => ({
+      name,
+      count,
+      percentage: totalLeads > 0 ? ((count / totalLeads) * 100).toFixed(1) : "0"
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  // Calculate leads by status for pie chart
+  const leadsByStatus = leads.reduce((acc, lead) => {
+    const status = lead.status || "new";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const statusDistributionData = Object.entries(leadsByStatus).map(([status, count]) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " "),
+    value: count,
+    color: status === "won" ? "#22c55e" : 
+           status === "qualified" ? "#3b82f6" : 
+           status === "contacted" ? "#f59e0b" : "#94a3b8"
+  }));
+
+  // Calculate campaign performance from actual data
+  const campaignPerformanceData = campaigns
+    .filter(c => c.sent && c.sent > 0)
+    .slice(0, 4)
+    .map(campaign => ({
+      name: campaign.name,
+      sent: campaign.sent || 0,
+      opened: campaign.opened || 0,
+      clicked: campaign.clicked || 0
+    }));
+
   return (
     <>
       <SEO 
@@ -330,27 +372,33 @@ export default function AnalyticsPage() {
                   <CardDescription>Opens and clicks by campaign</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
-                  <div className="h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={CAMPAIGN_PERFORMANCE} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                        <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={100} />
-                        <Tooltip 
-                          cursor={{ fill: 'transparent' }}
-                          contentStyle={{ 
-                            backgroundColor: '#fff', 
-                            borderRadius: '8px', 
-                            border: '1px solid #e2e8f0' 
-                          }} 
-                        />
-                        <Legend />
-                        <Bar dataKey="sent" fill="#94a3b8" name="Sent" radius={[0, 4, 4, 0]} barSize={20} />
-                        <Bar dataKey="opened" fill="#3b82f6" name="Opened" radius={[0, 4, 4, 0]} barSize={20} />
-                        <Bar dataKey="clicked" fill="#22c55e" name="Clicked" radius={[0, 4, 4, 0]} barSize={20} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {campaignPerformanceData.length > 0 ? (
+                    <div className="h-[400px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={campaignPerformanceData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                          <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                          <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={100} />
+                          <Tooltip 
+                            cursor={{ fill: 'transparent' }}
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              borderRadius: '8px', 
+                              border: '1px solid #e2e8f0' 
+                            }} 
+                          />
+                          <Legend />
+                          <Bar dataKey="sent" fill="#94a3b8" name="Sent" radius={[0, 4, 4, 0]} barSize={20} />
+                          <Bar dataKey="opened" fill="#3b82f6" name="Opened" radius={[0, 4, 4, 0]} barSize={20} />
+                          <Bar dataKey="clicked" fill="#22c55e" name="Clicked" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-[400px] flex items-center justify-center">
+                      <p className="text-slate-500">No campaign data available. Create and send your first campaign!</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -364,23 +412,27 @@ export default function AnalyticsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {['Technology', 'Real Estate', 'Manufacturing', 'Retail', 'Finance'].map((industry, i) => (
-                        <div key={industry} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-blue-500" />
-                            <span className="text-sm font-medium">{industry}</span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-blue-500 rounded-full" 
-                                style={{ width: `${85 - (i * 15)}%` }} 
-                              />
+                      {industryData.length > 0 ? (
+                        industryData.map((industry, i) => (
+                          <div key={industry.name} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-blue-500" />
+                              <span className="text-sm font-medium">{industry.name}</span>
                             </div>
-                            <span className="text-sm text-slate-500">{85 - (i * 15)}%</span>
+                            <div className="flex items-center gap-4">
+                              <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-blue-500 rounded-full" 
+                                  style={{ width: `${industry.percentage}%` }} 
+                                />
+                              </div>
+                              <span className="text-sm text-slate-500 w-12 text-right">{industry.percentage}%</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-sm text-slate-500 text-center py-4">No industry data available</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

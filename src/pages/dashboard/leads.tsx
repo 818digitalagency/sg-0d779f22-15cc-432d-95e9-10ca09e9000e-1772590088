@@ -31,28 +31,21 @@ const MOCK_LEADS: Lead[] = [
   {
     id: "1",
     businessName: "Maritime Tech Solutions",
-    contactName: "Sarah Johnson",
-    email: "sarah@maritimetech.ca",
-    phone: "(506) 555-0123",
-    address: "123 Main Street",
-    city: "Moncton",
-    province: "New Brunswick",
-    postalCode: "E1C 1A1",
+    email: "contact@maritimetech.ca",
+    phone: "506-555-1234",
     website: "https://maritimetech.ca",
-    businessDescription: "IT consulting and software development for maritime businesses",
-    category: "Information Technology",
+    address: "123 Main St",
+    city: "Moncton",
+    postalCode: "E1C 1A1",
+    province: "New Brunswick",
+    industry: "IT & Technology",
     businessAge: 5,
     rating: 4.8,
-    reviewCount: 124,
-    socialMedia: {
-      linkedin: "https://linkedin.com/company/maritime-tech"
-    },
-    dataSource: "Google Business",
-    industry: "Technology",
+    reviewCount: 127,
+    websiteQualityScore: 85,
     leadScore: 92,
-    websiteQualityScore: 88,
-    engagementStatus: "Not Contacted",
-    status: "active",
+    engagementStatus: "new",
+    status: "new",
     tags: ["high-priority", "tech"],
     createdAt: "2026-03-01T10:00:00Z",
     updatedAt: "2026-03-01T10:00:00Z"
@@ -280,24 +273,17 @@ export default function LeadsPage() {
   };
 
   const statusColors: Record<EngagementStatus, string> = {
-    "Not Contacted": "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-    "Contacted": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    "Responded": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    "Qualified": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    "Converted": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    "Lost": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+    "new": "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    "contacted": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    "qualified": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    "proposal_sent": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    "negotiation": "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    "won": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    "lost": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
   };
 
   const getStatusColor = (status: EngagementStatus) => {
-    const colors: Record<EngagementStatus, string> = {
-      "Not Contacted": "bg-gray-100 text-gray-700",
-      "Contacted": "bg-blue-100 text-blue-700",
-      "Responded": "bg-purple-100 text-purple-700",
-      "Qualified": "bg-emerald-100 text-emerald-700",
-      "Converted": "bg-green-100 text-green-700",
-      "Lost": "bg-red-100 text-red-700"
-    };
-    return colors[status];
+    return statusColors[status] || statusColors["new"];
   };
 
   // Loading skeleton component
@@ -425,7 +411,7 @@ export default function LeadsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {loading ? <Skeleton className="h-8 w-16" /> : leads.filter(l => l.engagementStatus === "Not Contacted").length}
+                  {loading ? <Skeleton className="h-8 w-16" /> : leads.filter(l => l.engagementStatus === "new").length}
                 </div>
               </CardContent>
             </Card>
@@ -494,11 +480,13 @@ export default function LeadsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Not Contacted">Not Contacted</SelectItem>
-                    <SelectItem value="Contacted">Contacted</SelectItem>
-                    <SelectItem value="Responded">Responded</SelectItem>
-                    <SelectItem value="Qualified">Qualified</SelectItem>
-                    <SelectItem value="Lost">Lost</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                    <SelectItem value="negotiation">Negotiation</SelectItem>
+                    <SelectItem value="won">Won</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

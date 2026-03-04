@@ -1,4 +1,12 @@
-export type EngagementStatus = "Not Contacted" | "Contacted" | "Responded" | "Qualified" | "Converted" | "Lost";
+// Engagement Status matches database CHECK constraint
+export type EngagementStatus = 
+  | "new" 
+  | "contacted" 
+  | "qualified" 
+  | "proposal_sent" 
+  | "negotiation" 
+  | "won" 
+  | "lost";
 
 export interface SocialMediaLinks {
   facebook?: string;

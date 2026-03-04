@@ -48,8 +48,8 @@ const MOCK_LEADS: Lead[] = [
     dataSource: "Google Business",
     leadScore: 85,
     websiteQualityScore: 72,
-    status: "Not Contacted",
-    engagementStatus: "Not Contacted",
+    status: "new",
+    engagementStatus: "new",
     tags: ["tech", "priority"],
     lastContactDate: "2026-02-20T14:00:00Z",
     createdAt: "2026-01-15T10:00:00Z",
@@ -74,8 +74,8 @@ const MOCK_LEADS: Lead[] = [
     dataSource: "LinkedIn",
     leadScore: 92,
     websiteQualityScore: 45,
-    status: "Not Contacted",
-    engagementStatus: "Not Contacted",
+    status: "new",
+    engagementStatus: "new",
     tags: ["accounting", "established"],
     lastContactDate: "2026-02-15T09:00:00Z",
     createdAt: "2026-01-20T14:00:00Z",
@@ -88,6 +88,7 @@ export default function MapViewPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedCity, setSelectedCity] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   const filteredLeads = MOCK_LEADS.filter(lead => {
     const matchesSearch = searchQuery === "" || 
@@ -156,6 +157,17 @@ export default function MapViewPage() {
                         {NB_CITIES.map(city => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

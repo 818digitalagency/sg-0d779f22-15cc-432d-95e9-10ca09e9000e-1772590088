@@ -55,7 +55,18 @@ useRealtimeLeads({
 
 **Database Columns:**
 ```sql
--- Real-time metrics columns
+-- Lead status values from database schema
+status TEXT CHECK (status IN 
+  ('new', 'contacted', 'qualified', 'proposal_sent', 
+   'negotiation', 'won', 'lost')
+)
+
+-- Campaign status values
+status TEXT CHECK (status IN 
+  ('draft', 'scheduled', 'sending', 'sent', 'paused', 'completed')
+)
+
+-- Real-time metrics columns in campaigns
 recipients         INTEGER DEFAULT 0
 sent_count         INTEGER DEFAULT 0
 opened_count       INTEGER DEFAULT 0

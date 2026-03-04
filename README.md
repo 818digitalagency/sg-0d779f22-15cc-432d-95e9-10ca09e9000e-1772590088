@@ -1,8 +1,8 @@
-# Opportunity Finder
+# 🎯 Opportunity Finder
 
-> **Discover. Engage. Convert.**
+**Discover. Engage. Convert.**
 
-An enterprise-grade lead intelligence and outreach automation platform designed for New Brunswick businesses.
+A comprehensive enterprise-grade lead intelligence and outreach automation platform designed for New Brunswick businesses.
 
 ![Opportunity Finder](public/og-image.png)
 
@@ -32,16 +32,22 @@ An enterprise-grade lead intelligence and outreach automation platform designed 
 
 ---
 
-## 🚀 Quick Start
+## 📸 Screenshots
 
-### Prerequisites
+[Add screenshots of your dashboard, lead management, and analytics pages]
 
-- Node.js 18+
+---
+
+## 🏃 Quick Start
+
+### **Prerequisites**
+- Node.js 18+ installed
+- npm or yarn package manager
 - PostgreSQL 14+
 - Redis 7+
-- npm or yarn
+- Softgen UI (for publishing)
 
-### Installation
+### **Installation**
 
 ```bash
 # Clone repository
@@ -60,6 +66,13 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+### **Publishing**
+
+- **Softgen UI**: Click the "PUBLISH" button in Softgen UI
+- **Vercel CLI**: `vercel --prod` (requires Vercel account)
+
+**That's it! 🎉**
 
 ---
 
@@ -252,6 +265,17 @@ See `DEPLOYMENT.md` for comprehensive deployment guide covering:
 - Kubernetes
 - Nginx configuration
 - SSL setup
+
+---
+
+## 🚀 Features
+
+### **Core Functionality**
+- ✅ **Lead Management** - Discovery, filtering, scoring, and prioritization
+- ✅ **Email Automation** - Proposal generation, campaign management, and follow-ups
+- ✅ **Analytics & Insights** - Real-time dashboard, funnel analysis, and export capabilities
+- ✅ **OAuth Ready** - Google, GitHub
+- ✅ **Security** - Row Level Security, input validation, XSS protection
 
 ---
 

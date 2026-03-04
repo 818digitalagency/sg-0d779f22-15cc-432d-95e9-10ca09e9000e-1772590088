@@ -14,12 +14,12 @@ INSERT INTO leads (
   website,
   address,
   city,
-  province,
   postal_code,
-  category,
+  province,
+  industry,
   business_age,
-  google_rating,
-  google_reviews,
+  rating,
+  review_count,
   website_quality_score,
   lead_score,
   status,
@@ -32,21 +32,21 @@ INSERT INTO leads (
   'https://realtimetest.com',
   '999 Test Street',
   'Moncton',
-  'New Brunswick',
   'E1C 0A1',
+  'New Brunswick',
   'IT & Technology',
   2,
   4.8,
   156,
   85,
   92,
-  'Not Contacted',
+  'new',
   ARRAY['real-time', 'test', 'tech']
 );
 
 -- Update lead status (should update instantly in UI)
 UPDATE leads 
-SET status = 'Contacted',
+SET status = 'contacted',
     last_contact_date = NOW()
 WHERE business_name = 'Test Real-Time Company';
 
@@ -192,7 +192,7 @@ WHERE id = (SELECT id FROM leads ORDER BY created_at DESC LIMIT 1);
 -- Update multiple leads at once
 UPDATE leads 
 SET lead_score = lead_score + 1
-WHERE category = 'IT & Technology';
+WHERE industry = 'IT & Technology';
 -- All matching leads should update in real-time
 
 -- ========================================

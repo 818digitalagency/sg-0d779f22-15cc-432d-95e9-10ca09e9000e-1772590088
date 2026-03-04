@@ -72,6 +72,8 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 - **Softgen UI**: Click the "PUBLISH" button in Softgen UI
 - **Vercel CLI**: `vercel --prod` (requires Vercel account)
 
+**⚠️ Deployment Issues?** See `VERCEL_DEPLOYMENT_FIX.md` for solutions to common errors.
+
 **That's it! 🎉**
 
 ---
